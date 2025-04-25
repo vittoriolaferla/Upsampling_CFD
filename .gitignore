@@ -12,8 +12,8 @@ basicsr.egg-info
 .vscode
 pretrained_models
 output_dir
-super_resolution
 weights
+superresolution
 
 docs/api
 scripts/__init__.py
