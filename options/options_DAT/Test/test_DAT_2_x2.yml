@@ -1,0 +1,90 @@
+# general settings
+name: test_DAT_x2_obstacles_final_Umass_0.00001
+model_type: DATModel
+scale: 2
+num_gpu: 1
+manual_seed: 10
+
+datasets:
+  test_1:  # the 1st test dataset
+    task: SR
+    name: test_set_physic
+    type: PairedImageDataset
+    dataroot_gt: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/test/HR
+    dataroot_lq: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/test/LW
+    dataroot_csv: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/test/CSV
+    dataroot_geometry: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/test/Geometry
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+
+
+# network structures
+network_g:
+  type: DAT
+  upscale: 2
+  in_chans: 3
+  img_size: 32
+  img_range: 1.
+  split_size: [8,16]
+  depth: [6,6,6,6,6,6]
+  embed_dim: 180
+  num_heads: [6,6,6,6,6,6]
+  expansion_factor: 2
+  resi_connection: '1conv'
+
+# path
+path:
+  pretrain_network_g: /home/vittorio/Scrivania/ETH/Upsampling/DAT/experiments/train_DAT_x2_obsstacles_Umass_0.00001/models/net_g_20000.pth
+  strict_load_g: True
+
+
+train:
+  optim_g:
+    type: Adam
+    lr: !!float 2e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [250000, 400000, 450000, 475000]
+    gamma: 0.5
+
+  total_iter: 10000
+  warmup_iter: -1  # no warm up
+
+  # losses
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1
+    reduction: mean
+  
+  
+  # Physics-Based Losses
+  use_umass_loss: True
+  umass_loss_weight: 0.00001
+  use_momentum_loss: False
+  momentum_loss_weight: 1  # Adjust as necessary
+  use_dissipation_loss: False
+  dissipation_loss_weight: 5 
+  rgb_to_vel: False # Adjust as necessary
+
+
+
+
+# validation settings
+val:
+  save_img: True
+  suffix: "suffix"  # add suffix to saved images, if None, use exp name
+  use_chop: False  # True to save memory, if img too large
+
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 2
+      test_y_channel: True
+    ssim:
+      type: calculate_ssim
+      crop_border: 2
+      test_y_channel: True

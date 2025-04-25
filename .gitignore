@@ -1,0 +1,19 @@
+.DS_Store
+
+# ignored folders
+basicsr/__pycache__
+experiments/*
+results/*
+tb_logger/*
+tmp/*
+datasets/*
+basicsr.egg-info
+.eggs
+.vscode
+pretrained_models
+output_dir
+super_resolution
+weights
+
+docs/api
+scripts/__init__.py
