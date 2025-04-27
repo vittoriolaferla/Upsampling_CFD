@@ -20,3 +20,15 @@ superresolution
 
 docs/api
 scripts/__init__.py
+basicsr/models/__pycache__
+basicsr/utils/__pycache__
+basicsr/data/__pycache__
+basicsr/basicsr_resshift/utils/__pycache__
+SwinIR_models/__pycache__
+utils/__pycache__
+utils/utils_ResShift/__pycache__
+utils/utils_SwinIR/__pycache__
+basicsr/losses/__pycache__
+basicsr_resshift/models/archs/__pycache__
+ResShift_main_scripts/__pycache__
+ResShift_main_scripts/datapipe/__pycache__

@@ -1,5 +1,6 @@
 from torch.utils import data as data
 from torchvision.transforms.functional import normalize
+import random
 
 from basicsr.data.data_util import (
     paired_paths_from_folder,
@@ -135,6 +136,22 @@ class PairedImageDataset(data.Dataset):
         img_bytes = self.file_client.get(lq_path, 'lq')
         img_lq = imfrombytes(img_bytes, float32=True)
 
+                    # patch size on the low-res
+        p = self.opt.get('lq_patch_size', 32)
+        h, w = img_lq.shape[:2]
+        # pick top-left corner of LQ crop
+        i = random.randint(0, h - p)
+        j = random.randint(0, w - p)
+        # crop LQ
+        img_lq = img_lq[i : i + p, j : j + p, :]
+        # crop corresponding GT
+        s = scale
+        img_gt = img_gt[
+            i * s : i * s + p * s, 
+            j * s : j * s + p * s, 
+            :
+        ]
+
         # Load CSV data
         csv_data = None
         csv_path = self.paths[index].get('csv_path')
@@ -175,18 +192,19 @@ class PairedImageDataset(data.Dataset):
         # BGR to RGB, HWC to CHW, numpy to tensor
         img_gt, img_lq = img2tensor([img_gt, img_lq], bgr2rgb=True, float32=True)
 
-        # Convert CSV data to tensor if it exists
+         # convert CSV data to tensor if it exists
         if csv_data is not None:
-            csv_tensor = torch.tensor(csv_data.values, dtype=torch.float32)
-        else:
-            csv_tensor = None
+             csv_tensor = torch.tensor(csv_data.values, dtype=torch.float32)
+        else:            # return an empty tensor instead of None
+            csv_tensor = torch.empty(0, dtype=torch.float32)
 
-        # Convert geometry data to tensor if it exists
+         # convert geometry data to tensor if it exists
         if geometry_data is not None:
             geometry_tensor = torch.tensor(geometry_data, dtype=torch.float32)
-            geometry_tensor = geometry_tensor.permute(2,0,1) #h,w,c -> c,h,w
+            geometry_tensor = geometry_tensor.permute(2,0,1)
         else:
-            geometry_tensor = None
+            # return an empty tensor instead of None
+            geometry_tensor = torch.empty((0,), dtype=torch.float32)
 
         # Normalize
         if self.mean is not None or self.std is not None:
@@ -196,12 +214,10 @@ class PairedImageDataset(data.Dataset):
         return {
             'lq': img_lq,
             'gt': img_gt,
-            'csv': csv_tensor,
-            'geometry': geometry_tensor,
+            #'csv': csv_tensor,
+            #'geometry': geometry_tensor,
             'lq_path': lq_path,
             'gt_path': gt_path,
-            'csv_path': csv_path,
-            'geometry_path': geometry_path,
         }
 
     def __len__(self):

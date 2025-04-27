@@ -11,9 +11,9 @@ from loguru import logger
 from omegaconf import OmegaConf
 from contextlib import nullcontext
 
-from utils import util_net
-from utils import util_image
-from utils import util_common
+from utils.utils_ResShift import util_net
+from utils.utils_ResShift import util_image
+from utils.utils_ResShift import util_common
 
 import torch
 import torch.nn.functional as F
@@ -21,7 +21,7 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 
 from datapipe.datasets import create_dataset
-from utils.util_image import ImageSpliterTh
+from utils.utils_ResShift.util_image import ImageSpliterTh
 
 class BaseSampler:
     def __init__(

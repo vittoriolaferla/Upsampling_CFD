@@ -1,5 +1,5 @@
 {
-  "task": "swinir_sr_x2_Obstacles_umass_Outdoor"    
+  "task": "swinir_sr_x2_Obstacles_no_umass_Outdoor"    
   , "model": "plain" 
   , "gpu_ids": [0]
   , "dist": true
@@ -25,7 +25,7 @@
       ,"lq_patchsize": 8
       , "dataloader_shuffle": true
       , "dataloader_num_workers": 16
-      , "dataloader_batch_size": 4  
+      , "dataloader_batch_size": 4
     }
     , "test": {
       "name": "test_dataset"            
@@ -56,7 +56,7 @@
 
   , "train": {
     "G_lossfn_type": "l1"
-    ,"use_umass_loss": true
+    ,"use_umass_loss": false
     , "use_mask": true
     , "umass_loss_weight":2
     ,"use_dissipation_loss": false

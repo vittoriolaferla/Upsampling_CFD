@@ -19,7 +19,7 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')
 sys.path.append(parent_dir)
 
 # Now you can import your module directly
-from models_KAT.Umass import Umass, DifferentiableRGBtoVel, Dissipation
+from SwinIR_models.Umass import Umass, DifferentiableRGBtoVel
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -120,7 +120,8 @@ class SRModel(BaseModel):
         self.lq = data['lq'].to(self.device)
         if 'gt' in data:
             self.gt = data['gt'].to(self.device)
-            self.gt_csv = data['csv'].to(self.device)  # Ground truth velocity
+        
+#            self.gt_csv = data['csv'].to(self.device)  # Ground truth velocity
             #self.gt_geometry = data['geometry'].to(self.device)  # Ground truth geometry
     def optimize_parameters(self, current_iter):
         self.optimizer_g.zero_grad()
@@ -161,7 +162,14 @@ class SRModel(BaseModel):
 
         # Umass Loss
         if self.opt_train['use_umass_loss']:
-            umass_loss = self.umass_loss_weight * self.umass_loss_fn(self.RGBtoVel(self.output), self.gt_csv)
+            umass_vel = self.RGBtoVel(self.output)
+            vel_real  = self.RGBtoVel(self.gt)
+            if self.opt_train['use_mask']:
+                valid_mask = ~((self.gt[:,0]==1)&(self.gt[:,1]==1)&(self.gt[:,2]==1))
+                valid_mask = valid_mask.to(umass_vel.device)
+                umass_loss = self.umass_loss_weight * self.umass_loss_fn(umass_vel, vel_real, mask=valid_mask)
+            else:
+                umass_loss = self.umass_loss_weight * self.umass_loss_fn(umass_vel, vel_real)
             l_total += umass_loss
             loss_dict['umass_loss'] = umass_loss
 
@@ -227,18 +235,17 @@ class SRModel(BaseModel):
                 # Compute mass loss and dissipation loss
                 # Umass Loss
                 if self.opt_train['use_umass_loss']:
-                    umass_loss = self.umass_loss_weight * self.umass_loss_fn(self.RGBtoVel(self.output), self.gt_csv)
+                    umass_vel = self.RGBtoVel(self.output)
+                    vel_real  = self.RGBtoVel(self.gt)
+                    if self.opt_train['use_mask']:
+                        valid_mask = ~((self.gt[:,0]==1)&(self.gt[:,1]==1)&(self.gt[:,2]==1))
+                        valid_mask = valid_mask.to(umass_vel.device)
+                        umass_loss = self.umass_loss_weight * self.umass_loss_fn(umass_vel, vel_real, mask=valid_mask)
+                    else:
+                        umass_loss = self.umass_loss_weight * self.umass_loss_fn(umass_vel, vel_real)
                     self.metric_results['mass_loss'] += umass_loss.item()
 
-                # Compute mass loss and dissipation loss
-                if self.opt_train.get('use_momentum_loss', False):
-                    momentum_loss = self.momentum_loss_weight * self.momentum_loss_fn(sr_img.to(self.device), gt_img.to(self.device))
-                    self.metric_results['momentum_loss'] += momentum_loss.item()
 
-                if self.opt_train.get('use_dissipation_loss', False):
-                    dissipation_loss = self.dissipation_loss_weight * self.dissipation_loss_fn(E_velocity, gt_velocity)
-                    self.metric_results['dissipation_loss'] += dissipation_loss.item()
-            # Enforce zero values in the output where obstacles are present
         # Enforce zero values in the output where obstacles are present
             if hasattr(self, 'gt_geometry'):
                 mask = (self.gt_geometry >0).float().to(self.device)

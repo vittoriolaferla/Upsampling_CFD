@@ -14,7 +14,7 @@ from einops import rearrange
 from contextlib import nullcontext
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from models_KAT.Umass import Umass, DifferentiableRGBtoVel, Dissipation
+from SwinIR_models.Umass import Umass, DifferentiableRGBtoVel, Dissipation
 
 
 

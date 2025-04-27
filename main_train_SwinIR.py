@@ -16,7 +16,7 @@ from utils.utils_SwinIR import utils_option as option
 from utils.utils_SwinIR.utils_dist import get_dist_info, init_dist
 
 from data.select_dataset import define_Dataset
-from models_KAT.select_model import define_Model
+from SwinIR_models.select_model import define_Model
 
 
 '''

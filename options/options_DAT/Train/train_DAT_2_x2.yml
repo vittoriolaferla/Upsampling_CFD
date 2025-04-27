@@ -1,5 +1,5 @@
 # general settings
-name: train_DAT_x2_obsstacles_Umass_0.00001
+name: train_DAT_x2__umass_outdoor_flow
 model_type: DATModel
 scale: 2
 num_gpu: auto
@@ -11,21 +11,20 @@ datasets:
     task: SR
     name: DF2K
     type: PairedImageDataset
-    dataroot_gt: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/train/HR
-    dataroot_lq: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/train/LW
-    dataroot_csv: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/train/CSV
-    dataroot_geometry: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/train/Geometry
+    dataroot_gt: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/train/high_res
+    dataroot_lq: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/train/low_res
     filename_tmpl: '{}'
     io_backend:
       type: disk
 
-    gt_size: 64
+    gt_size: 256
+    lq_patch_size: 32
     use_hflip: True
     use_rot: True
     # data loader
     use_shuffle: True
     num_worker_per_gpu: 1
-    batch_size_per_gpu: 4
+    batch_size_per_gpu: 2
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
 
@@ -33,10 +32,8 @@ datasets:
     task: SR
     name: Set5
     type: PairedImageDataset
-    dataroot_gt: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/test/HR
-    dataroot_lq: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/test/LW
-    dataroot_csv: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/test/CSV
-    dataroot_geometry: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/test/Geometry
+    dataroot_gt: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/test/high_res
+    dataroot_lq: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/test/low_res
     filename_tmpl: '{}'
     io_backend:
       type: disk
@@ -85,7 +82,8 @@ train:
 
   # Physics-Based Losses
   use_umass_loss: True
-  umass_loss_weight: 0.00001
+  use_mask: True
+  umass_loss_weight: 3
   use_momentum_loss: False
   momentum_loss_weight: 1  # Adjust as necessary
   use_dissipation_loss: False

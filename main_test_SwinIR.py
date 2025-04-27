@@ -7,7 +7,7 @@ import os
 import torch
 import requests
 
-from models_KAT.network_swinir import SwinIR as net
+from SwinIR_models.network_swinir import SwinIR as net
 from utils.utils_SwinIR import utils_image as util
 
 
