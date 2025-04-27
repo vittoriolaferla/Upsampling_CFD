@@ -2,6 +2,9 @@
 
 # ignored folders
 basicsr/__pycache__
+basicsr/basicsr_dat/__pycache__
+basicsr/basicsr_resshift/__pycache__
+basicsr/basicsr_dat/__pycache_
 experiments/*
 results/*
 tb_logger/*
