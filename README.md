@@ -1,7 +1,7 @@
 ### VISION TRANSFORMERS
 
 ## Requirements
-To run the Vision TRANSFORMERS you need to create a conda enviroment and run the following commands:
+To run the Vision TRANSFORMERS you need to create a conda enviroment with python 3.8. Therefore run the following commands:
 ```
 conda create -n Upsampling python=3.8
 conda activate Upsampling
@@ -28,7 +28,7 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=4321 basicsr
 ```
 
 ### Testing
-To thest the models use this commands:
+To test the models use this commands:
 ```python
 # SwinIR model
 python main_test_SwinIR.py --task classical_sr --scale (scale) --training_patch_size 32 --model_path superresolution/swinir_sr_x2_Obstacles/models/80000_G.pth --folder_lq datasets/dataset_obstacles/dataset_csv_Y_all_cases/test/LW --folder_gt datasets/dataset_obstacles/dataset_csv_Y_all_cases/test/HR
@@ -43,7 +43,7 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=4321 basicsr
 ### DIFFUSION MODEL
 
 ## Requirements
-The ResShift model requires different configuration for this reason you need to create another conda enviroment
+The ResShift model requires a different configuration, for this reason you need to create another conda enviroment with a higher version of python.
 ```
 conda create -n ResShift python=3.12
 conda activate ResShift
