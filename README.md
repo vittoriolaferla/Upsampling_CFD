@@ -34,6 +34,8 @@ python main_test_SwinIR.py --task classical_sr --scale (scale) --training_patch_
 # DAT model
 ##X2 magnification factor
 python -m torch.distributed.launch --nproc_per_node=1 --master_port=4321 basicsr/test.py -opt options/options_DAT/Test/test_DAT_2_x2.yml --launcher pytorch
+##X4 magnification factor
+python -m torch.distributed.launch --nproc_per_node=1 --master_port=4321 basicsr/test.py -opt options/options_DAT/Test/test_DAT_2_x2.yml --launcher pytorch
 ```
 
 ### DIFFUSION MODEL
@@ -65,3 +67,4 @@ To test the models use this command:
 #ResShift model
 python inference_customModel.py    --in_path  data/dataset_vectors/validation/lw     --out_path infereceResut_physics/no_physics_Vector_x2_time    --ckpt_path /home/vittorio/Scrivania/ResShift_4_scale/models_trained_no_physcs/no_physics_Vector_x2/ckpts/model_75000.pth     --config_path configs/realsr_swinunet_realsrgan48.yaml     --scale 2/4    --chop_size 64     --chop_stride 64     --bs 1     --task realsr
 
+If you need further instruction here are listed the original repositories: [SwinIR](https://github.com/JingyunLiang/SwinIR) [DAT](https://github.com/zhengchen1999/DAT) [ResShift](https://github.com/zsyOAOA/ResShift)
