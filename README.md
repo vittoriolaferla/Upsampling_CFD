@@ -53,7 +53,6 @@ To train the different models, run the following commands. You may need to chang
 All the configs files are under the folder `options`.
 
 ```python
-#ResShift model
 ##X2 magnification factor
 CUDA_VISIBLE_DEVICES=0 torchrun --standalone --nproc_per_node=1 --nnodes=1 main.py --cfg_path options/options_ResShift/realsr_swinunet_x2.yaml --save_dir  output_dir
 ##X4 magnification factor
@@ -64,7 +63,10 @@ CUDA_VISIBLE_DEVICES=0 torchrun --standalone --nproc_per_node=1 --nnodes=1 main.
 ### Testing
 To test the models use this command:
 ```python
-#ResShift model
 python inference_customModel.py    --in_path  data/dataset_vectors/validation/lw     --out_path infereceResut_physics/no_physics_Vector_x2_time    --ckpt_path /home/vittorio/Scrivania/ResShift_4_scale/models_trained_no_physcs/no_physics_Vector_x2/ckpts/model_75000.pth     --config_path configs/realsr_swinunet_realsrgan48.yaml     --scale 2/4    --chop_size 64     --chop_stride 64     --bs 1     --task realsr
+```
 
-If you need further instruction here are listed the original repositories: [SwinIR](https://github.com/JingyunLiang/SwinIR) [DAT](https://github.com/zhengchen1999/DAT) [ResShift](https://github.com/zsyOAOA/ResShift)
+If you need further instruction here are listed the original repositories: 
+[SwinIR](https://github.com/JingyunLiang/SwinIR) 
+[DAT](https://github.com/zhengchen1999/DAT) 
+[ResShift](https://github.com/zsyOAOA/ResShift)
