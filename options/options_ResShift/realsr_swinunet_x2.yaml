@@ -169,7 +169,7 @@ train:
   ema_rate: 0.999
   iterations: 25000          # total iterations
   # save logging
-  save_freq: 10      
+  save_freq: 10000000      
   log_freq: [10, 2000, 1]         # [training loss, training images, val images]
   local_logging: True           # manually save images
   tf_logging: False             # tensorboard logging
