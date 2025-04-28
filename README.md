@@ -67,6 +67,6 @@ python inference_customModel.py    --in_path  data/dataset_vectors/validation/lw
 ```
 
 If you need further instruction here are listed the original repositories: 
-[SwinIR](https://github.com/JingyunLiang/SwinIR) 
-[DAT](https://github.com/zhengchen1999/DAT) 
-[ResShift](https://github.com/zsyOAOA/ResShift)
+[SwinIR](https://github.com/JingyunLiang/SwinIR) \
+[DAT](https://github.com/zhengchen1999/DAT) \
+[ResShift](https://github.com/zsyOAOA/ResShift)\
