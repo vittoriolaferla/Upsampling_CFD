@@ -2,10 +2,10 @@ trainer:
   target: trainer.TrainerDifIR
 
 model:
-  target: models_ResShift.unet.UNetModelSwin
+  target: ResShift_models.unet.UNetModelSwin
   ckpt_path: ~
   params:
-    image_size: 64
+    image_size: 256
     in_channels: 3
     model_channels: 160
     out_channels: 3
@@ -24,10 +24,10 @@ model:
     window_size: 4
     mlp_ratio: 4
     cond_lq: True
-    lq_size: 32
+    lq_size: 128
 
 diffusion:
-  target: models_ResShift.script_util.create_gaussian_diffusion
+  target: ResShift_models.script_util.create_gaussian_diffusion
   params:
     sf: 2
     schedule_name: exponential
@@ -99,9 +99,8 @@ data:
   train:
     type: realesrgan
     params:
-      dir_paths:     /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_obstacles/dataset_csv_Y_all_cases/train/HR
-      dataroot_vel:  /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_obstacles/dataset_csv_Y_all_cases/train/CSV
-      im_exts: ['jpg', ]
+      dir_paths:     /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/train/high_res
+      im_exts: ['jpg', 'png']
       io_backend:
         type: disk
       blur_kernel_size: 21
@@ -121,7 +120,7 @@ data:
       betap_range2: [1, 2.0]
       final_sinc_prob: 0.8
       gt_size: 64
-      crop_pad_size: 300
+      crop_pad_size: 64
       use_hflip: True
       use_rot: False
       rescale_gt: True
@@ -130,14 +129,13 @@ data:
   val:
     type: base
     params:
-      dir_path:  /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_obstacles/dataset_csv_Y_all_cases/test/LW
-      dataroot_vel:  /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_obstacles/dataset_csv_Y_all_cases/test/CSV
-      im_exts: ['jpg', ]
+      dir_path:  /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/test/high_res
+      im_exts: ['jpg', 'png']
       transform_type: default
       transform_kwargs:
           mean: 0.5
           std: 0.5
-      extra_dir_path: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_obstacles/dataset_csv_Y_all_cases/test/HR
+      extra_dir_path: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/train/low_res
       extra_transform_type: default
       extra_transform_kwargs:
           mean: 0.5
@@ -171,8 +169,8 @@ train:
   ema_rate: 0.999
   iterations: 25000          # total iterations
   # save logging
-  save_freq: 50      
-  log_freq: [50, 2000, 1]         # [training loss, training images, val images]
+  save_freq: 10      
+  log_freq: [10, 2000, 1]         # [training loss, training images, val images]
   local_logging: True           # manually save images
   tf_logging: False             # tensorboard logging
   # validation settings

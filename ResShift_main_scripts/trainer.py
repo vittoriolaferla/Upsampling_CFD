@@ -14,7 +14,7 @@ from einops import rearrange
 from contextlib import nullcontext
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from SwinIR_models.Umass import Umass, DifferentiableRGBtoVel, Dissipation
+from SwinIR_models.Umass import Umass, DifferentiableRGBtoVel
 
 
 
@@ -560,7 +560,7 @@ class TrainerDifIR(TrainerBase):
 
             # Load ground truth images and velocities
             im_gt = data['gt'].cuda()
-            vel_tensor = data['vel'].cuda()  # Load velocity tensor
+           # vel_tensor = data['vel'].cuda()  # Load velocity tensor
             kernel1 = data['kernel1'].cuda()
             kernel2 = data['kernel2'].cuda() # Needed for size check
             sinc_kernel = data['sinc_kernel'].cuda()
@@ -685,22 +685,26 @@ class TrainerDifIR(TrainerBase):
             gt_size = self.configs.degradation['gt_size']
             # Need to adjust the scale factor passed to crop if resize_back is False
             crop_sf = 1 if self.configs.degradation.resize_back else sf
-            im_gt, im_lq, vel_tensor = self.paired_random_crop_with_vel(im_gt, im_lq, vel_tensor, gt_size, crop_sf) # Use crop_sf
+            im_gt, im_lq, vel_out = self.paired_random_crop_with_vel(img_gts=im_gt,img_lqs= im_lq, vel_gts= None, gt_patch_size=gt_size,sf= crop_sf) # Use crop_sf
 
             im_lq = (im_lq - 0.5) / 0.5
             im_gt = (im_gt - 0.5) / 0.5
             # vel_tensor = (vel_tensor - vel_tensor.mean()) / (vel_tensor.std() + 1e-8) # Optional vel normalization
+            self.lq = im_lq
+            self.gt = im_gt
 
-            self.lq, self.gt, self.vel, flag_nan = replace_nan_in_batch(im_lq, im_gt, vel_tensor)
-            if flag_nan:
+            #self.lq, self.gt, self.vel, flag_nan = replace_nan_in_batch(im_lq, im_gt, vel_tensor)
+            ''' if flag_nan:
                 with open(f"records_nan_rank{self.rank}.log", 'a') as f:
                     f.write(f'Find NaN value in rank{self.rank}\n')
+            '''
 
             # Use queue if configured
             if hasattr(self, 'queue_size'):
                  self._dequeue_and_enqueue()
 
-            return {'lq': self.lq, 'gt': self.gt, 'vel': self.vel} # Return vel too
+            return {'lq': self.lq, 'gt': self.gt, #'vel': self.vel
+                    } # Return vel too
 
         else: # Handling for non-realesrgan or phase != 'train'
              data = {key:value.cuda().to(dtype=dtype) for key, value in data.items() if isinstance(value, torch.Tensor)}
@@ -711,77 +715,68 @@ class TrainerDifIR(TrainerBase):
 
 
     def paired_random_crop_with_vel(self, img_gts, img_lqs, vel_gts, gt_patch_size, sf):
-        """Paired random crop variation that also crops the velocity tensor.
+        """Paired random crop that also optionally crops a velocity tensor.
 
         Args:
-            img_gts (Tensor): GT images. Shape (B, C, H, W).
-            img_lqs (Tensor): LQ images. Shape (B, C, H_lq, W_lq).
-            vel_gts (Tensor): GT velocity tensor. Shape (B, H, W) based on error.
-                              (Docstring comment might need update from B, 1, H, W).
-            gt_patch_size (int): GT patch size.
-            sf (int): Scale factor.
+            img_gts (Tensor): GT images, shape (B, C, H, W).
+            img_lqs (Tensor): LQ images, shape (B, C, H_lq, W_lq).
+            vel_gts (Tensor or None): Velocity tensor, shape (B, H, W), or None.
+            gt_patch_size (int): size of GT crop (height=width).
+            sf (int): scale factor between GT and LQ.
 
         Returns:
-            Tuple[Tensor]: cropped img_gts, img_lqs, vel_gts
+            img_gts_cropped, img_lqs_cropped, vel_gts_cropped_or_None
         """
-        # Ensure inputs are lists for consistent processing
-        if not isinstance(img_gts, list):
-            img_gts = [img_gts]
-        if not isinstance(img_lqs, list):
-            img_lqs = [img_lqs]
-        if not isinstance(vel_gts, list):
-             vel_gts = [vel_gts] # Wrap vel_gts in a list if it's a single tensor
+        # wrap into lists so we can use the same code for single vs list
+        single_gt = not isinstance(img_gts, list)
+        single_lq = not isinstance(img_lqs, list)
+        img_list = img_gts if isinstance(img_gts, list) else [img_gts]
+        lq_list  = img_lqs if isinstance(img_lqs, list) else [img_lqs]
 
-        # Get dimensions
-        b, c, h_lq, w_lq = img_lqs[0].size()
-        _, _, h_gt, w_gt = img_gts[0].size()
-        # Assuming vel_gts[0] is the tensor causing the error, its ndim would be 3
-        # _, h_vel, w_vel = vel_gts[0].size() # Get size for 3D tensor
+        has_vel = vel_gts is not None
+        if has_vel:
+            vel_list = vel_gts if isinstance(vel_gts, list) else [vel_gts]
+        else:
+            vel_list = []
 
-        lq_patch_size = gt_patch_size // sf
+        # sizes
+        _, _, H_gt, W_gt = img_list[0].shape
+        _, _, H_lq, W_lq = lq_list[0].shape
+        lq_patch = gt_patch_size // sf
 
-        # Check consistency between LQ and GT sizes
-        if h_gt != h_lq * sf or w_gt != w_lq * sf:
-             raise ValueError(f'Scale factor {sf} is wrong. GT ({h_gt}, {w_gt}) is not {sf}x multiplication of LQ ({h_lq}, {w_lq}).')
-        # Optional: Check consistency between GT image and velocity H, W
-        # if h_gt != h_vel or w_gt != w_vel:
-        #      raise ValueError(f'GT image size ({h_gt}, {w_gt}) does not match velocity tensor size ({h_vel}, {w_vel}).')
-
-
-        # Calculate random crop offsets based on GT size
-        if h_gt < gt_patch_size or w_gt < gt_patch_size:
-             raise ValueError(f'GT patch size {gt_patch_size} is larger than GT image size ({h_gt}, {w_gt}). Cannot crop.')
-        top = random.randint(0, h_gt - gt_patch_size)
-        left = random.randint(0, w_gt - gt_patch_size)
-
-        # Calculate corresponding LQ offsets
-        top_lq = top // sf
+        if H_gt < gt_patch_size or W_gt < gt_patch_size:
+            raise ValueError(f"GT patch ({gt_patch_size}) larger than image ({H_gt},{W_gt})")
+        top = random.randint(0, H_gt - gt_patch_size)
+        left = random.randint(0, W_gt - gt_patch_size)
+        top_lq  = top  // sf
         left_lq = left // sf
-        if h_lq < lq_patch_size or w_lq < lq_patch_size:
-            raise ValueError(f'LQ patch size {lq_patch_size} is larger than LQ image size ({h_lq}, {w_lq}). Cannot crop.')
 
+        # crop GT
+        img_crops = [
+            v[:, :, top:top+gt_patch_size, left:left+gt_patch_size]
+            for v in img_list
+        ]
+        # crop LQ
+        lq_crops = [
+            v[:, :, top_lq:top_lq+lq_patch, left_lq:left_lq+lq_patch]
+            for v in lq_list
+        ]
+        # crop vel if present
+        if has_vel:
+            vel_crops = [
+                v[:, top:top+gt_patch_size, left:left+gt_patch_size]
+                for v in vel_list
+            ]
+        else:
+            vel_crops = []
 
-        # --- Perform cropping ---
-        # Crop 4D GT images (B, C, H, W)
-        img_gts = [v[:, :, top:top + gt_patch_size, left:left + gt_patch_size] for v in img_gts]
+        # unwrap lists if needed
+        if single_gt: img_crops = img_crops[0]
+        if single_lq: lq_crops = lq_crops[0]
+        vel_out = vel_crops[0] if has_vel and len(vel_crops)==1 else (vel_crops or None)
 
-        # Crop 3D velocity tensor (B, H, W) - Corrected Indexing
-        vel_gts = [v[:, top:top + gt_patch_size, left:left + gt_patch_size] for v in vel_gts]
+        return img_crops, lq_crops, vel_out
 
-        # Crop 4D LQ images (B, C, H_lq, W_lq)
-        img_lqs = [v[:, :, top_lq:top_lq + lq_patch_size, left_lq:left_lq + lq_patch_size] for v in img_lqs]
-        # --- End Cropping ---
-
-
-        # Unwrap lists if they originally contained single tensors
-        if len(img_gts) == 1:
-            img_gts = img_gts[0]
-        if len(img_lqs) == 1:
-            img_lqs = img_lqs[0]
-        if len(vel_gts) == 1:
-             vel_gts = vel_gts[0]
-
-        return img_gts, img_lqs, vel_gts
 
 
     def backward_step(self, dif_loss_wrapper, micro_data, num_grad_accumulate, tt):
@@ -792,7 +787,7 @@ class TrainerDifIR(TrainerBase):
 
             # Convert images to velocities
             vel_pred = self.rgb_to_vel(z0_pred)
-            vel_gt = micro_data['vel'].float()
+            vel_gt =  self.rgb_to_vel(z_t)
             
             
             if self.configs.train.get('use_umass_loss', False):
@@ -1179,8 +1174,8 @@ def replace_nan_in_batch(im_lq, im_gt, vel_tensor):
     # Check for NaNs in any of the tensors
     nan_mask = (
         torch.isnan(im_lq).view(im_lq.size(0), -1).any(dim=1) |
-        torch.isnan(im_gt).view(im_gt.size(0), -1).any(dim=1) |
-        torch.isnan(vel_tensor).view(vel_tensor.size(0), -1).any(dim=1)
+        torch.isnan(im_gt).view(im_gt.size(0), -1).any(dim=1) 
+        #torch.isnan(vel_tensor).view(vel_tensor.size(0), -1).any(dim=1)
     )
     
     if nan_mask.any():
@@ -1193,12 +1188,12 @@ def replace_nan_in_batch(im_lq, im_gt, vel_tensor):
         # Filter out invalid samples
         im_lq = im_lq[valid_indices]
         im_gt = im_gt[valid_indices]
-        vel_tensor = vel_tensor[valid_indices]
+       # vel_tensor = vel_tensor[valid_indices]
         flag = True
     else:
         flag = False
         
-    return im_lq, im_gt, vel_tensor, flag
+    return im_lq, im_gt,flag# vel_tensor, 
 
 
 def my_worker_init_fn(worker_id):

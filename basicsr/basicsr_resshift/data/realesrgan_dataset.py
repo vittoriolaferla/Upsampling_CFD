@@ -53,6 +53,7 @@ class RealESRGANDataset(data.Dataset):
         self.file_client = None
         self.io_backend_opt = opt['io_backend']
 
+
         # ----------------------------- Load Image Paths ----------------------------- #
         self.paths = []
         if 'dir_paths' in opt:
@@ -179,7 +180,7 @@ class RealESRGANDataset(data.Dataset):
         img_gt = img_gt[top:top + crop_pad_size, left:left + crop_pad_size, ...]
 
         # Crop CSV data if available and in training mode
-        if vel_df is not None and self.mode == 'training' and 'csv_coord_cols' in self.opt:
+        if vel_df is not None and 'csv_coord_cols' in self.opt:
             csv_coord_cols = self.opt['csv_coord_cols']
             if isinstance(csv_coord_cols, list) and len(csv_coord_cols) == 2:
                 try:
@@ -240,7 +241,6 @@ class RealESRGANDataset(data.Dataset):
         sinc_kernel = torch.FloatTensor(sinc_kernel) if sinc_kernel is not None else self.pulse_tensor
 
         # ------------------------ Process Velocity Data for Tensor ------------------------ #
-        vel_tensor = torch.zeros(self.gt_size, self.gt_size).float()  # Placeholder
         if vel_df is not None and 'csv_coord_cols' in self.opt and len(self.opt['csv_coord_cols']) == 2:
             csv_coord_cols = self.opt['csv_coord_cols']
             try:
@@ -269,6 +269,7 @@ class RealESRGANDataset(data.Dataset):
                 print(f"Error processing velocity data: {e} in {vel_path}")
 
 
+
         # ------------------------ Return Dictionary ------------------------ #
         return_d = {
             'gt': img_gt,
@@ -276,8 +277,8 @@ class RealESRGANDataset(data.Dataset):
             'kernel2': kernel2,
             'sinc_kernel': sinc_kernel,
             'gt_path': gt_path,
-            'vel': vel_tensor,
-            'vel_path': vel_path # Optionally return the velocity path
+            #'vel': vel_tensor,
+           # 'vel_path': vel_path # Optionally return the velocity path
         }
 
         return return_d

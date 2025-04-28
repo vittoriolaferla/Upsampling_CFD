@@ -17,7 +17,6 @@ pretrained_models
 output_dir
 weights
 superresolution
-
 docs/api
 scripts/__init__.py
 basicsr/models/__pycache__
@@ -32,3 +31,16 @@ basicsr/losses/__pycache__
 basicsr_resshift/models/archs/__pycache__
 ResShift_main_scripts/__pycache__
 ResShift_main_scripts/datapipe/__pycache__
+output_dir
+ResShift_models/__pycache__
+ldm/modules/diffusionmodules/__pycache__
+ldm/modules/__pycache__
+ldm/models/__pycache__
+ldm/__pycache__
+ldm/modules/distributions/__pycache__
+ldm/modules/vqvae/__pycache__
+# Byte-compiled / optimized / DLL files
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class

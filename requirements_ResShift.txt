@@ -1,0 +1,15 @@
+omegaconf
+torch 
+torchvision 
+torchaudio
+lpips
+loguru
+einops
+matplotlib
+cv2
+opencv-python
+scikit-image
+albumentations
+pandas
+timm
+loralib
