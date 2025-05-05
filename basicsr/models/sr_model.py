@@ -11,6 +11,7 @@ from basicsr.utils.registry import MODEL_REGISTRY
 from .base_model import BaseModel
 import sys
 import os
+from torch.utils.data import DataLoader
 
 # Get the absolute path to the directory two levels above
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -19,13 +20,13 @@ parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')
 sys.path.append(parent_dir)
 
 # Now you can import your module directly
-from SwinIR_models.Umass import Umass, DifferentiableRGBtoVel
+from SwinIR_models.Umass import Umass, DifferentiableRGBtoVel , Umass_Vecchairelli  , GetVelfromRGB
 import matplotlib.pyplot as plt
 import numpy as np
 
 @MODEL_REGISTRY.register()
 class SRModel(BaseModel):
-    """Base SR model for single image super-resolution."""
+    """Base SR model for single image super-resolution with debug hooks."""
 
     def __init__(self, opt):
         super(SRModel, self).__init__(opt)
@@ -34,34 +35,32 @@ class SRModel(BaseModel):
         self.net_g = build_network(opt['network_g'])
         self.net_g = self.model_to_device(self.net_g)
         self.print_network(self.net_g)
-        self.opt_train=opt['train']
-
+        self.opt_train = opt['train']
 
         # load pretrained models
         load_path = self.opt['path'].get('pretrain_network_g', None)
         if load_path is not None:
             param_key = self.opt['path'].get('param_key_g', 'params')
-            self.load_network(self.net_g, load_path, self.opt['path'].get('strict_load_g', True), param_key)
+            self.load_network(
+                self.net_g, load_path,
+                self.opt['path'].get('strict_load_g', True), param_key)
 
         if self.is_train:
             self.init_training_settings()
-        
-        # Initialize the Umass loss function if needed
+
+        # Initialize the Umass and RGBtoVel modules
         if opt['train']['use_umass_loss']:
-            self.RGBtoVel= DifferentiableRGBtoVel(vmin=0,vmax=0.56)
-            self.umass_loss_fn = Umass().to(self.device)
+            self.RGBtoVel = DifferentiableRGBtoVel().to(self.device)
+            self.umass_loss_fn = Umass(debug=False).to(self.device)
+            self.umass_loss_weight = opt['train']['umass_loss_weight']
+        if opt['train']['use_umass_loss_Vecchiarelli']:
+            #self.RGBtoVel = GetVelfromRGB().to(self.device)
+            self.umass_loss_fn = Umass_Vecchairelli().to(self.device)
             self.umass_loss_weight = opt['train']['umass_loss_weight']
 
-        # Initialize the Umass loss function if needed
         if opt['train']['use_momentum_loss']:
-            #self.momentum_loss_fn = MomentumLoss().to(self.device)
             self.momentum_loss_weight = opt['train']['momentum_loss_weight']
 
-        # Initialize the Dissipation loss function if needed
-        if  opt['train']['use_dissipation_loss']:
-            self.dissipation_loss_fn = Dissipation().to(self.device)
-            self.dissipation_loss_weight = opt['train']['dissipation_loss_weight']
-        
 
 
     def init_training_settings(self):
@@ -72,33 +71,22 @@ class SRModel(BaseModel):
         if self.ema_decay > 0:
             logger = get_root_logger()
             logger.info(f'Use Exponential Moving Average with decay: {self.ema_decay}')
-            # define network net_g with Exponential Moving Average (EMA)
-            # net_g_ema is used only for testing on one GPU and saving
-            # There is no need to wrap with DistributedDataParallel
             self.net_g_ema = build_network(self.opt['network_g']).to(self.device)
-            # load pretrained model
             load_path = self.opt['path'].get('pretrain_network_g', None)
             if load_path is not None:
-                self.load_network(self.net_g_ema, load_path, self.opt['path'].get('strict_load_g', True), 'params_ema')
+                self.load_network(
+                    self.net_g_ema, load_path,
+                    self.opt['path'].get('strict_load_g', True), 'params_ema')
             else:
-                self.model_ema(0)  # copy net_g weight
+                self.model_ema(0)
             self.net_g_ema.eval()
 
         # define losses
-        if train_opt.get('pixel_opt'):
-            self.cri_pix = build_loss(train_opt['pixel_opt']).to(self.device)
-        else:
-            self.cri_pix = None
-
-        if train_opt.get('perceptual_opt'):
-            self.cri_perceptual = build_loss(train_opt['perceptual_opt']).to(self.device)
-        else:
-            self.cri_perceptual = None
-
+        self.cri_pix = build_loss(train_opt['pixel_opt']).to(self.device) if train_opt.get('pixel_opt') else None
+        self.cri_perceptual = build_loss(train_opt['perceptual_opt']).to(self.device) if train_opt.get('perceptual_opt') else None
         if self.cri_pix is None and self.cri_perceptual is None:
             raise ValueError('Both pixel and perceptual losses are None.')
 
-        # set up optimizers and schedulers
         self.setup_optimizers()
         self.setup_schedulers()
 
@@ -116,6 +104,7 @@ class SRModel(BaseModel):
         self.optimizer_g = self.get_optimizer(optim_type, optim_params, **train_opt['optim_g'])
         self.optimizers.append(self.optimizer_g)
 
+
     def feed_data(self, data):
         self.lq = data['lq'].to(self.device)
         if 'gt' in data:
@@ -124,6 +113,10 @@ class SRModel(BaseModel):
 #            self.gt_csv = data['csv'].to(self.device)  # Ground truth velocity
             #self.gt_geometry = data['geometry'].to(self.device)  # Ground truth geometry
     def optimize_parameters(self, current_iter):
+
+        #for p in self.net_g.parameters():
+        #    p.grad.data.clamp_(-0.1, 0.1)
+
         self.optimizer_g.zero_grad()
         self.output = self.net_g(self.lq)
 
@@ -156,9 +149,9 @@ class SRModel(BaseModel):
             if l_style is not None:
                 l_total += l_style
                 loss_dict['l_style'] = l_style
-        
-        # Assume that the following boolean flags are defined elsewhere in your class:
-        # self.use_rgb_to_vel, self.use_umass_loss, self.use_dissipation_loss
+
+
+
 
         # Umass Loss
         if self.opt_train['use_umass_loss']:
@@ -174,7 +167,17 @@ class SRModel(BaseModel):
             loss_dict['umass_loss'] = umass_loss
 
 
+        # Umass Loss
+        if self.opt_train['use_umass_loss_Vecchiarelli']:
+            umass_vel =next(iter(DataLoader(GetVelfromRGB((self.output)))))
+            vel_real  = next(iter(DataLoader(GetVelfromRGB((self.gt)))))
+            umass_loss = self.umass_loss_weight * self.umass_loss_fn(umass_vel, vel_real)
+            l_total += umass_loss
+            loss_dict['umass_loss'] = umass_loss
+        
+        
         l_total.backward()
+
         self.optimizer_g.step()
 
         # Record Total Loss
