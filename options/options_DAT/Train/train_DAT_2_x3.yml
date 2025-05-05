@@ -54,7 +54,7 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: /content/drive/MyDrive/UpsamplingPaperDatasets/net_g_2000.pth
+  pretrain_network_g: 
   strict_load_g: True
   resume_state: ~
 
@@ -82,7 +82,7 @@ train:
 
   # Physics-Based Losses
   use_umass_loss: False
-  use_umass_loss_Vecchiarelli: False
+  use_umass_loss_Vecchiarelli: True
   use_mask: False
   umass_loss_weight: 6
   use_momentum_loss: False
