@@ -1,5 +1,5 @@
 # general settings
-name: train_DAT_x2__umass_outdoor_flow
+name: train_DAT_x2_umass_Vecchiarelli
 model_type: DATModel
 scale: 2
 num_gpu: auto
@@ -11,20 +11,20 @@ datasets:
     task: SR
     name: DF2K
     type: PairedImageDataset
-    dataroot_gt: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/train/high_res
-    dataroot_lq: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/train/low_res
+    dataroot_gt: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Vector_Sigmoid/train/HR
+    dataroot_lq: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Vector_Sigmoid/train/LR
     filename_tmpl: '{}'
     io_backend:
       type: disk
 
     gt_size: 256
-    lq_patch_size: 32
+    lq_patch_size: 48
     use_hflip: True
     use_rot: True
     # data loader
     use_shuffle: True
     num_worker_per_gpu: 1
-    batch_size_per_gpu: 2
+    batch_size_per_gpu: 8
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
 
@@ -32,8 +32,9 @@ datasets:
     task: SR
     name: Set5
     type: PairedImageDataset
-    dataroot_gt: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/test/high_res
-    dataroot_lq: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/test/low_res
+    dataroot_gt: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Vector_Sigmoid/val/HR
+    dataroot_lq: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Vector_Sigmoid/val/LR
+
     filename_tmpl: '{}'
     io_backend:
       type: disk
@@ -43,7 +44,7 @@ network_g:
   type: DAT
   upscale: 2
   in_chans: 3
-  img_size: 32
+  img_size: 48
   img_range: 1.
   split_size: [8,16]
   depth: [6,6,6,6,6,6]
@@ -62,7 +63,7 @@ path:
 train:
   optim_g:
     type: Adam
-    lr: !!float 2e-4
+    lr: !!float 4e-5
     weight_decay: 0
     betas: [0.9, 0.99]
 
@@ -81,9 +82,10 @@ train:
     reduction: mean
 
   # Physics-Based Losses
-  use_umass_loss: True
-  use_mask: True
-  umass_loss_weight: 3
+  use_umass_loss: False
+  use_umass_loss_Vecchiarelli: True
+  use_mask: False
+  umass_loss_weight: 6
   use_momentum_loss: False
   momentum_loss_weight: 1  # Adjust as necessary
   use_dissipation_loss: False
@@ -107,7 +109,7 @@ val:
 
 # logging settings
 logger:
-  print_freq: 500
+  print_freq: 100
   save_checkpoint_freq: !!float 5e3
   use_tb_logger: True
   wandb:

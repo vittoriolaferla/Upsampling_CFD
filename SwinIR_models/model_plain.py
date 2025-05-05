@@ -27,7 +27,7 @@ class ModelPlain(ModelBase):
         self.log_dict = OrderedDict()         # Initialize log_dict here
 
         if self.opt_train['use_umass_loss']:
-            self.RGBtoVel= DifferentiableRGBtoVel(vmin=0,vmax=0.56)
+            self.RGBtoVel= DifferentiableRGBtoVel()
             self.Umass= Umass(debug=False)
             self.Umass_lossfn_weight = self.opt_train.get('umass_loss_weight', 1.0) # Get weight, default to 1.0
             self.log_dict['Umass_loss'] = 0.0 # Initialize Umass loss in log
@@ -165,22 +165,18 @@ class ModelPlain(ModelBase):
         G_loss = self.G_lossfn_weight * self.G_lossfn(self.E, self.H)
         self.log_dict['G_loss'] = G_loss.item()
         total_loss = G_loss
+        if torch.isnan(self.E).any() or torch.isinf(self.E).any():
+            print("⚠️ found NaN/Inf in network output")
+        if torch.isnan(self.H).any() or torch.isinf(self.H).any():
+            print("⚠️ found NaN/Inf in GT")
+
 
         if self.opt_train['use_umass_loss']:
             umass_vel = self.RGBtoVel(self.E)
             vel_real  = self.RGBtoVel(self.H)
 
-            if self.opt_train['use_mask']:
-                valid_mask = ~((self.H[:,0]==1)&(self.H[:,1]==1)&(self.H[:,2]==1))
-                valid_mask = valid_mask.to(umass_vel.device)
-                umass_loss = self.Umass_lossfn_weight * self.Umass(
-                                    umass_vel, vel_real, mask=valid_mask)
-                # debug print here too:
-               # print(f"[Train] use_amsk=1, mask percent kept = "
-                 #   f"{valid_mask.sum().item()/(valid_mask.numel()):.2%}, "
-                  #  f"umass_loss = {umass_loss.item():.4f}")
-            else:
-                umass_loss = self.Umass_lossfn_weight * self.Umass_lossfn(
+            
+            umass_loss = self.Umass_lossfn_weight * self.Umass(
                                     umass_vel, vel_real, mask=None)
                # print(f"[Train] use_amsk=0, umass_loss = {umass_loss.item():.4f}")
             total_loss += umass_loss

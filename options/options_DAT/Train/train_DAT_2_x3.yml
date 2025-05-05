@@ -11,8 +11,8 @@ datasets:
     task: SR
     name: DF2K
     type: PairedImageDataset
-    dataroot_gt: /content/drive/MyDrive/UpsamplingPaperDatasets/Dataset_Outdoor_Flow_Scale_2/train/high_res
-    dataroot_lq: /content/drive/MyDrive/UpsamplingPaperDatasets/Dataset_Outdoor_Flow_Scale_2/train/low_res
+    dataroot_gt: /content/drive/MyDrive/UpsamplingPaperDatasets/SPlitOutdoorFlowComponentW/train/high_res
+    dataroot_lq: /content/drive/MyDrive/UpsamplingPaperDatasets/SPlitOutdoorFlowComponentW/train/low_res
     filename_tmpl: '{}'
     io_backend:
       type: disk
@@ -32,8 +32,8 @@ datasets:
     task: SR
     name: Set5
     type: PairedImageDataset
-    dataroot_gt: /content/drive/MyDrive/UpsamplingPaperDatasets/Dataset_Outdoor_Flow_Scale_2/test/high_res
-    dataroot_lq: /content/drive/MyDrive/UpsamplingPaperDatasets/Dataset_Outdoor_Flow_Scale_2/tes/low_res
+    dataroot_gt: /content/drive/MyDrive/UpsamplingPaperDatasets/SPlitOutdoorFlowComponentW/test/high_res
+    dataroot_lq: /content/drive/MyDrive/UpsamplingPaperDatasets/SPlitOutdoorFlowComponentW/tes/low_res
     filename_tmpl: '{}'
     io_backend:
       type: disk
@@ -82,9 +82,9 @@ train:
 
   # Physics-Based Losses
   use_umass_loss: False
-  use_mask: True
-  umass_loss_weight: 3
-  use_momentum_loss: False
+  use_umass_loss_Vecchiarelli: True
+  use_mask: False
+  umass_loss_weight: 6
   momentum_loss_weight: 1  # Adjust as necessary
   use_dissipation_loss: False
   dissipation_loss_weight: 5 
@@ -92,7 +92,7 @@ train:
 
 # validation settings
 val:
-  val_freq: !!float 5e3
+  val_freq: !!float 2e3
   save_img: True
 
   metrics:
@@ -108,7 +108,7 @@ val:
 # logging settings
 logger:
   print_freq: 500
-  save_checkpoint_freq: !!float 5e3
+  save_checkpoint_freq: !!float 5e2
   use_tb_logger: True
   wandb:
     project: ~

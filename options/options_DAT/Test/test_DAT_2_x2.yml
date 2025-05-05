@@ -1,5 +1,5 @@
 # general settings
-name: test_DAT_x2_obstacles_final_Umass_0.00001
+name: test_DAT_x2_Indoor_umass_0.35_Vector
 model_type: DATModel
 scale: 2
 num_gpu: 1
@@ -10,10 +10,8 @@ datasets:
     task: SR
     name: test_set_physic
     type: PairedImageDataset
-    dataroot_gt: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/test/HR
-    dataroot_lq: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/test/LW
-    dataroot_csv: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/test/CSV
-    dataroot_geometry: /home/vittorio/Scrivania/ETH/Upsampling/DAT/datasets/dataset_csv_geometry_Y/test/Geometry
+    dataroot_gt: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Vector_Sigmoid/val/HR
+    dataroot_lq:  /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Vector_Sigmoid/val/LR
     filename_tmpl: '{}'
     io_backend:
       type: disk
@@ -24,7 +22,7 @@ network_g:
   type: DAT
   upscale: 2
   in_chans: 3
-  img_size: 32
+  img_size: 48
   img_range: 1.
   split_size: [8,16]
   depth: [6,6,6,6,6,6]
@@ -35,7 +33,7 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: /home/vittorio/Scrivania/ETH/Upsampling/DAT/experiments/train_DAT_x2_obsstacles_Umass_0.00001/models/net_g_20000.pth
+  pretrain_network_g: /home/vittorio/Documenti/Upsampling_CFD/experiments/train_DAT_x2_umass_0.35_Vector_Indoor/models/net_g_latest.pth
   strict_load_g: True
 
 
@@ -62,7 +60,7 @@ train:
   
   
   # Physics-Based Losses
-  use_umass_loss: True
+  use_umass_loss: False
   umass_loss_weight: 0.00001
   use_momentum_loss: False
   momentum_loss_weight: 1  # Adjust as necessary
