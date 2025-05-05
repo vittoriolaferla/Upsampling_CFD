@@ -33,7 +33,7 @@ datasets:
     name: Set5
     type: PairedImageDataset
     dataroot_gt: /content/drive/MyDrive/UpsamplingPaperDatasets/SPlitOutdoorFlowComponentW/test/high_res
-    dataroot_lq: /content/drive/MyDrive/UpsamplingPaperDatasets/SPlitOutdoorFlowComponentW/tes/low_res
+    dataroot_lq: /content/drive/MyDrive/UpsamplingPaperDatasets/SPlitOutdoorFlowComponentW/test/low_res
     filename_tmpl: '{}'
     io_backend:
       type: disk
@@ -54,7 +54,7 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: 
+  pretrain_network_g: /content/drive/MyDrive/UpsamplingPaperDatasets/net_g_2000.pth
   strict_load_g: True
   resume_state: ~
 
