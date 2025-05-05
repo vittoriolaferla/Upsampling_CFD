@@ -85,6 +85,7 @@ train:
   use_umass_loss_Vecchiarelli: True
   use_mask: False
   umass_loss_weight: 6
+  use_momentum_loss: False
   momentum_loss_weight: 1  # Adjust as necessary
   use_dissipation_loss: False
   dissipation_loss_weight: 5 
