@@ -147,6 +147,7 @@ class PairedImageDataset(data.Dataset):
 
         scale = self.opt['scale']
         gt_size = self.opt.get('gt_size', None)
+        lq_patch_size= self.opt.get('lq_patch_size', 128)
 
         # ------------------------------------------------------------------
         # 1. Load GT and LQ images ----------------------------------------
