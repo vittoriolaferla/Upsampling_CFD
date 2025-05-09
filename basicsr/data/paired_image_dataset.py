@@ -23,10 +23,12 @@ import pandas as pd
 import torch
 
 
+
 def paths_from_folder(folder):
     """Generate paths from folder."""
     paths = list(scandir(folder, full_path=True))
     return paths
+
 
 
 def paired_paths_from_folder(folders, keys, filename_tmpl):
@@ -56,8 +58,16 @@ def paired_paths_from_folder(folders, keys, filename_tmpl):
     return paths
 
 
+
 @DATASET_REGISTRY.register()
 class PairedImageDataset(data.Dataset):
+    """Paired image dataset for image restoration with corresponding CSV and Geometry data.
+
+    This version **re‑introduces** the `paired_random_crop` call that was present in the
+    upstream BasicSR implementation.  When `phase == 'train'` the dataset will now
+    randomly crop an HR patch of size `gt_size` (e.g. 256×256) and the matching LR
+    patch (e.g. 128×128 for scale = 2).
+    """
     """Paired image dataset for image restoration with corresponding CSV and Geometry data.
 
     This version **re‑introduces** the `paired_random_crop` call that was present in the
@@ -77,6 +87,7 @@ class PairedImageDataset(data.Dataset):
         self.gt_folder = opt['dataroot_gt']
         self.lq_folder = opt['dataroot_lq']
         self.csv_folder = opt.get('dataroot_csv', None)
+        self.geometry_folder = opt.get('dataroot_geometry', None)  # Added geometry_folder
         self.geometry_folder = opt.get('dataroot_geometry', None)  # Added geometry_folder
         self.filename_tmpl = opt.get('filename_tmpl', '{}')
         self.csv_coord_cols = opt.get('csv_coord_cols', None)
@@ -115,6 +126,7 @@ class PairedImageDataset(data.Dataset):
 
     def _load_paths_from_folders(self):
         # Build the list of paired paths depending on which optional folders are present
+        # Build the list of paired paths depending on which optional folders are present
         if self.csv_folder and self.geometry_folder:
             self.paths = paired_paths_from_folder(
                 [self.lq_folder, self.gt_folder, self.csv_folder, self.geometry_folder],
@@ -138,7 +150,12 @@ class PairedImageDataset(data.Dataset):
     # MAIN ENTRY --------------------------------------------------------------
     # -------------------------------------------------------------------------
 
+    # -------------------------------------------------------------------------
+    # MAIN ENTRY --------------------------------------------------------------
+    # -------------------------------------------------------------------------
+
     def __getitem__(self, index):
+        # Initialise FileClient lazily so multiple workers work correctly
         # Initialise FileClient lazily so multiple workers work correctly
         if self.file_client is None:
             self.file_client = FileClient(
@@ -156,10 +173,31 @@ class PairedImageDataset(data.Dataset):
         img_bytes = self.file_client.get(gt_path, 'gt')
         img_gt = imfrombytes(img_bytes, float32=True)
 
+
         lq_path = self.paths[index]['lq_path']
         img_bytes = self.file_client.get(lq_path, 'lq')
         img_lq = imfrombytes(img_bytes, float32=True)
 
+        # ------------------------------------------------------------------
+        # 2. Random paired crop **(TRAIN ONLY)** --------------------------
+        # ------------------------------------------------------------------
+        if self.opt['phase'] == 'train':
+            if gt_size is None:
+                raise KeyError("'gt_size' must be set in the dataset options when phase == 'train'.")
+            img_gt, img_lq = paired_random_crop(img_gt, img_lq, lq_patch_size, scale)
+
+        # ------------------------------------------------------------------
+        # 3. Optional CSV / Geometry load ---------------------------------
+        # ------------------------------------------------------------------
+        csv_tensor = torch.empty(0, dtype=torch.float32)
+        if self.csv_folder is not None:
+            csv_path = self.paths[index].get('csv_path')
+            if csv_path:
+                try:
+                    csv_data = pd.read_csv(csv_path, header=None, delimiter=self.csv_delimiter)
+                    csv_tensor = torch.tensor(csv_data.values, dtype=torch.float32)
+                except Exception as e:
+                    print(f"Error reading CSV file: {csv_path} - {e}")
         # ------------------------------------------------------------------
         # 2. Random paired crop **(TRAIN ONLY)** --------------------------
         # ------------------------------------------------------------------
@@ -190,7 +228,19 @@ class PairedImageDataset(data.Dataset):
                     geometry_tensor = torch.tensor(geometry_data, dtype=torch.float32).permute(2, 0, 1)
                 except Exception as e:
                     print(f"Error reading geometry file: {geometry_path} - {e}")
+        geometry_tensor = torch.empty((0,), dtype=torch.float32)
+        if self.geometry_folder is not None:
+            geometry_path = self.paths[index].get('geometry_path')
+            if geometry_path:
+                try:
+                    geometry_data = imfrombytes(self.file_client.get(geometry_path, 'geometry'), float32=True)
+                    geometry_tensor = torch.tensor(geometry_data, dtype=torch.float32).permute(2, 0, 1)
+                except Exception as e:
+                    print(f"Error reading geometry file: {geometry_path} - {e}")
 
+        # ------------------------------------------------------------------
+        # 4. Color‑space cast / validation crop ---------------------------
+        # ------------------------------------------------------------------
         # ------------------------------------------------------------------
         # 4. Color‑space cast / validation crop ---------------------------
         # ------------------------------------------------------------------
@@ -199,9 +249,14 @@ class PairedImageDataset(data.Dataset):
             img_lq = bgr2ycbcr(img_lq, y_only=True)[..., None]
 
         # When NOT training, ensure GT size matches LQ * scale (no random crop)
+        # When NOT training, ensure GT size matches LQ * scale (no random crop)
         if self.opt['phase'] != 'train':
             img_gt = img_gt[0: img_lq.shape[0] * scale, 0: img_lq.shape[1] * scale, :]
+            img_gt = img_gt[0: img_lq.shape[0] * scale, 0: img_lq.shape[1] * scale, :]
 
+        # ------------------------------------------------------------------
+        # 5. To tensor & normalise ----------------------------------------
+        # ------------------------------------------------------------------
         # ------------------------------------------------------------------
         # 5. To tensor & normalise ----------------------------------------
         # ------------------------------------------------------------------
@@ -216,11 +271,16 @@ class PairedImageDataset(data.Dataset):
             'gt': img_gt,
             # 'csv': csv_tensor,
             # 'geometry': geometry_tensor,
+            # 'csv': csv_tensor,
+            # 'geometry': geometry_tensor,
             'lq_path': lq_path,
             'gt_path': gt_path,
         }
 
     # -------------------------------------------------------------------------
 
+    # -------------------------------------------------------------------------
+
     def __len__(self):
         return len(self.paths)
+
