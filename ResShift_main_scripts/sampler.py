@@ -151,10 +151,11 @@ class BaseSampler:
             self.write_log('Loaded Done')
 
     def load_model(self, model, ckpt_path=None):
-        state = torch.load(ckpt_path, map_location=f"cuda:{self.rank}")
-        if 'state_dict' in state:
-            state = state['state_dict']
-        util_net.reload_model(model, state)
+        #state = torch.load(ckpt_path, map_location=f"cuda:{self.rank}")
+        #if 'state_dict' in state:
+        #    state = state['state_dict']
+        #util_net.reload_model(model, state)
+        pass
 
     def freeze_model(self, net):
         for params in net.parameters():

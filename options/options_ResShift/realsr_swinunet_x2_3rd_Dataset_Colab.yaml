@@ -90,7 +90,7 @@ degradation:
   gray_noise_prob2: 0.4
   jpeg_range2: [30, 95]
 
-  gt_size: 256
+  gt_size: 64
   resize_back: False
   use_sharp: False
 

@@ -51,7 +51,7 @@ class TrainerBase:
         # setup seed
         self.setup_seed()
 
-        self.rgb_to_vel = DifferentiableRGBtoVel(vmin=0,vmax=0.56)
+        self.rgb_to_vel = DifferentiableRGBtoVel()
          # Initialize the Umass loss function if needed
         if self.configs.train.get('use_umass_loss', False):
             self.umass_loss_fn = Umass()
