@@ -21,7 +21,7 @@ class DatasetSR(data.Dataset):
         self.opt = opt
         self.n_channels = opt['n_channels'] if opt['n_channels'] else 3
         self.sf = opt['scale'] if opt['scale'] else 4
-        self.patch_size = self.opt['H_size'] if self.opt['H_size'] else 96
+        self.patch_size = self.opt['lq_patchsize'] if self.opt['H_size'] else 96
         self.L_size = self.patch_size // self.sf
         self.csv_delimiter = opt.get('csv_delimiter', ',')
         self.csv_coord_cols = opt.get('csv_coord_cols', None)
@@ -64,27 +64,43 @@ class DatasetSR(data.Dataset):
                 except Exception as e:
                     print(f"Error reading CSV file: {csv_path} - {e}")
 
-        if self.phase == 'train':  # Only patch during training
-            H_cropped_h, H_cropped_w, _ = img_L.shape
-            rnd_h = random.randint(0, max(0, H_cropped_h - self.L_size))
-            rnd_w = random.randint(0, max(0, H_cropped_w - self.L_size))
-            img_L = img_L[rnd_h:rnd_h + self.L_size, rnd_w:rnd_w + self.L_size, :]
-            img_H = img_H[int(rnd_h * self.sf):int(rnd_h * self.sf) + self.patch_size,
-                          int(rnd_w * self.sf):int(rnd_w * self.sf) + self.patch_size, :]
+        # ------------------------------------------------------------------
+# 2.  Paired random crop (TRAIN ONLY) ------------------------------
+# ------------------------------------------------------------------
+        if self.phase == 'train':
+            # --- compute equivalent L-patch size and pick a random position
+            lq_patch  = self.patch_size // self.sf       # e.g. 256 → 64 for ×4
+            h_lq, w_lq = img_L.shape[:2]
 
+            if h_lq < lq_patch or w_lq < lq_patch:
+                raise ValueError(
+                    f'LQ patch ({h_lq}×{w_lq}) is smaller than requested size '
+                    f'({lq_patch}×{lq_patch}). File: {H_path}'
+                )
+
+            top  = random.randint(0, h_lq - lq_patch)
+            left = random.randint(0, w_lq - lq_patch)
+
+            # --- crop LQ ---------------------------------------------------
+            img_L = img_L[top : top + lq_patch,
+                        left: left + lq_patch, :]
+
+            # --- crop the matching HQ region ------------------------------
+            top_gt, left_gt = top * self.sf, left * self.sf
+            img_H = img_H[top_gt : top_gt + self.patch_size,
+                        left_gt: left_gt + self.patch_size, :]
+
+            # --- crop CSV (if any) with the *HQ* coordinates --------------
             if csv_data_full is not None:
-                csv_start_row = int(rnd_h * self.sf)
-                csv_end_row = int(rnd_h * self.sf) + self.patch_size
-                csv_start_col = int(rnd_w * self.sf)
-                csv_end_col = int(rnd_w * self.sf) + self.patch_size
                 try:
-                    csv_data_cropped_pd = csv_data_full.iloc[csv_start_row:csv_end_row, csv_start_col:csv_end_col].copy()
-                    csv_data_cropped = torch.tensor(csv_data_cropped_pd.values, dtype=torch.float32)
-                except IndexError:
-                    print(f"Warning: Cropped CSV indices out of bounds for {csv_path}")
-                    csv_data_cropped = None
+                    csv_slice = csv_data_full.iloc[
+                        top_gt : top_gt + self.patch_size,
+                        left_gt: left_gt + self.patch_size
+                    ]
+                    csv_data_cropped = torch.tensor(csv_slice.values,
+                                                    dtype=torch.float32)
                 except Exception as e:
-                    print(f"Error converting CSV data to tensor: {e}")
+                    print(f'[CSV-crop] {csv_path} – {e}')
                     csv_data_cropped = None
 
         elif self.phase == 'test': # return the full csv data

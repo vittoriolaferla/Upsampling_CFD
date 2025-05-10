@@ -2,34 +2,34 @@ trainer:
   target: trainer.TrainerDifIR
 
 model:
-  target: models.unet.UNetModelSwin
+  target: ResShift_models.unet.UNetModelSwin
   ckpt_path: ~
   params:
-    image_size: 48
+    image_size: 256
     in_channels: 3
     model_channels: 160
     out_channels: 3
-    attention_resolutions: [2]
-    dropout: 0
-    channel_mult: [1, 2, 2, 4]
-    num_res_blocks: [1, 1, 1, 1]
+    attention_resolutions: [32,16,8,4]
+    dropout: 0.1
+    channel_mult: [1,2,4]  #Next to try is [1,2,4,8]
+    num_res_blocks: [2,2,2]
     conv_resample: True
     dims: 2
     use_fp16: False
     num_head_channels: 32
     use_scale_shift_norm: True
-    resblock_updown: False
+    resblock_updown: False 
     swin_depth: 2
     swin_embed_dim: 192
     window_size: 4
     mlp_ratio: 4
     cond_lq: True
-    lq_size: 48
+    lq_size: 128
 
 diffusion:
-  target: models.script_util.create_gaussian_diffusion
+  target: ResShift_models.script_util.create_gaussian_diffusion
   params:
-    sf: 4
+    sf: 2
     schedule_name: exponential
     schedule_kwargs:
       power: 0.3
@@ -42,11 +42,34 @@ diffusion:
     timestep_respacing: ~
     scale_factor: 1.0
     normalize_input: True
-    latent_flag: True
+    latent_flag: False
+
+autoencoder:
+  target: ldm.models.autoencoder.VQModelTorch
+  ckpt_path: weights/autoencoder_vq_f4.pth
+  use_fp16: True
+  params:
+    embed_dim: 3
+    n_embed: 8192
+    ddconfig:
+      double_z: False
+      z_channels: 3
+      resolution: 48
+      in_channels: 3
+      out_ch: 3
+      ch: 128
+      ch_mult:
+      - 1
+      - 2
+      - 4
+      num_res_blocks: 2
+      attn_resolutions: []
+      dropout: 0.0
+      padding_mode: zeros
 
 
 degradation:
-  sf: 4
+  sf: 2
   # the first degradation process
   resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
   resize_range: [0.15, 1.5]
@@ -67,16 +90,17 @@ degradation:
   gray_noise_prob2: 0.4
   jpeg_range2: [30, 95]
 
-  gt_size: 256 
+  gt_size: 64
   resize_back: False
   use_sharp: False
+
 
 data:
   train:
     type: realesrgan
     params:
-      dir_paths: data/upsampledDataset/train/upsampled
-      im_exts: png
+      dir_paths:    /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/train/high_res
+      im_exts: ['jpg', 'png']
       io_backend:
         type: disk
       blur_kernel_size: 21
@@ -94,24 +118,24 @@ data:
       blur_sigma2: [0.2, 1.5]
       betag_range2: [0.5, 4.0]
       betap_range2: [1, 2.0]
-
       final_sinc_prob: 0.8
-
-      gt_size: 256
-      crop_pad_size: 300
+      gt_size: 64
+      crop_pad_size: 64
       use_hflip: True
       use_rot: False
       rescale_gt: True
+
+
   val:
     type: base
     params:
-      dir_path: data/validation/downsampled
-      im_exts: png
+      dir_path:  /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/test/high_res
+      im_exts: ['jpg', 'png']
       transform_type: default
       transform_kwargs:
           mean: 0.5
           std: 0.5
-      extra_dir_path: data/validation/original
+      extra_dir_path: /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/test/low_res
       extra_transform_type: default
       extra_transform_kwargs:
           mean: 0.5
@@ -124,23 +148,34 @@ train:
   lr_min: 2e-5                      # learning rate 
   lr_schedule: ~
   warmup_iterations: 5000
+  #Umass
+  use_umass_loss: False
+  umass_loss_weight:  0.000005
+  #Dissipation
+  use_dissipation_loss: False
+  dissipation_loss_weight: 1
+  #Vorticity
+  use_vorticity_loss: False
+  vorticity_loss_weight: 0.2
+  #Mse weight
+  mse_loss_weight: 1
   # dataloader
-  batch: [8, 8]                
-  microbatch: 1
-  num_workers: 1
+  batch: [16, 8]                
+  microbatch: 8
+  num_workers: 4
   prefetch_factor: 2            
   # optimization settings
-  weight_decay: 0               
+  weight_decay: 0              
   ema_rate: 0.999
-  iterations: 300000            # total iterations
+  iterations: 25000          # total iterations
   # save logging
-  save_freq: 5000              
-  log_freq: [200, 2000, 1]         # [training loss, training images, val images]
+  save_freq: 4000      
+  log_freq: [500, 2000, 1]         # [training loss, training images, val images]
   local_logging: True           # manually save images
   tf_logging: False             # tensorboard logging
   # validation settings
   use_ema_val: True            
-  val_freq: ${train.save_freq}
+  val_freq: 1000000000000
   val_y_channel: True
   val_resolution: ${model.params.lq_size}
   val_padding_mode: reflect

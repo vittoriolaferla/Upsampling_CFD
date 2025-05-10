@@ -6,7 +6,6 @@ lpips
 loguru
 einops
 matplotlib
-cv2
 opencv-python
 scikit-image
 albumentations
