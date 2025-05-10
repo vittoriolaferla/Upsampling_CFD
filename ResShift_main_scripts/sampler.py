@@ -4,13 +4,13 @@
 
 import os, sys, math, random
 
-import cv2
 import numpy as np
 from pathlib import Path
 from loguru import logger
 from omegaconf import OmegaConf
 from contextlib import nullcontext
-
+# Add the parent directory to sys.path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 from utils.utils_ResShift import util_net
 from utils.utils_ResShift import util_image
 from utils.utils_ResShift import util_common
