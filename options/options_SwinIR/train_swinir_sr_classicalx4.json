@@ -1,11 +1,11 @@
 {
-  "task": "swinir_sr_x2_W_Component_4"  
+  "task": "swinir_sr_x2_outdoor_scalar_dataset"    
   , "model": "plain" 
   , "gpu_ids": [0]
   , "dist": true
 
-  , "scale": 4     
-  , "n_channels": 1
+  , "scale": 4  
+  , "n_channels": 3
 
   , "path": {
     "root": "superresolution"            
@@ -17,55 +17,53 @@
     "train": {
       "name": "train_dataset"  
      , "dataset_type": "sr"          
-      , "dataroot_H":  "/home/vittorio/Scrivania/ResShift_4_scale/data/3_Models_Dataset/W_Images_4/train/HR"
-      , "dataroot_L":  "/home/vittorio/Scrivania/ResShift_4_scale/data/3_Models_Dataset/W_Images_4/train/LR"
-      , "dataroot_vel": "/home/vittorio/Scrivania/KAIR/data/dataset_split_final/train/hr_csv"       
+      , "dataroot_H": "/home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow_4/train/high_res"
+      , "dataroot_L": "/home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow_4/train/low_res"
         
 
-      , "H_size": 48
-      ,"lq_patchsize": 12
+      , "H_size": 256
+      ,"lq_patchsize": 64
       , "dataloader_shuffle": true
-      , "dataloader_num_workers": 16
-      , "dataloader_batch_size": 16    
+      , "dataloader_num_workers": 1
+      , "dataloader_batch_size": 2
     }
     , "test": {
       "name": "test_dataset"            
       , "dataset_type": "sr"         
-      , "dataroot_H":"/home/vittorio/Scrivania/ResShift_4_scale/data/3_Models_Dataset/W_Images_4/val/HR"
-      , "dataroot_L": "/home/vittorio/Scrivania/ResShift_4_scale/data/3_Models_Dataset/W_Images_4/val/LR"
-      , "dataroot_vel": "/home/vittorio/Scrivania/KAIR/data/dataset_split_final/validation/hr_csv"       
+      , "dataroot_H": "/home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow_4/test/high_res"
+      , "dataroot_L": "/home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow_4/test/low_res"
     }
   }
 
   , "netG": {
     "net_type": "swinir" 
-    , "upscale": 4                   
-    , "in_chans": 1
-    , "img_size": 12                    
-    , "window_size": 4
+    , "upscale":4                   
+    , "in_chans": 3
+    , "img_size": 64                   
+    , "window_size": 8
     , "img_range": 1.0 
     , "depths": [6, 6, 6, 6, 6, 6] 
     , "embed_dim": 180 
     , "num_heads": [6, 6, 6, 6, 6, 6]
     , "mlp_ratio": 2 
-    , "upsampler": "nearest+conv"       
+    , "upsampler": "pixelshuffle"       
     , "resi_connection": "1conv"        
-    ,  "scale": 4
+    ,  "scale": 2
 
     , "init_type": "default"
   }
 
+
   , "train": {
     "G_lossfn_type": "l1"
     ,"use_umass_loss": false
-    , "umass_loss_weight": 0.75
+    , "use_mask": false
+    , "umass_loss_weight":0.2
     ,"use_dissipation_loss": false
-    ,"dissipation_loss_weight": 10
-    , "G_lossfn_weight": 1     
+    ,"dissipation_loss_weight": 0.25
+    , "G_lossfn_weight": 1         
 
     , "E_decay": 0.999
-    ,"diff_vel_dir": "superresolution/swinir_sr_classical_patch24_x4_physic_mass_nearest_conv/diff_velocities"
-    ,"pred_vel_dir": "superresolution/swinir_sr_classical_patch24_x4_physic_mass_nearest_conv/pred_velocities"
     ,"save_heatmaps": false             
 
     , "G_optimizer_type": "adam"        
@@ -84,8 +82,8 @@
     , "G_param_strict": true
     , "E_param_strict": true
 
-    , "checkpoint_test": 4000           
-    , "checkpoint_save": 4000          
-    , "checkpoint_print": 200          
+    , "checkpoint_test": 2000         
+    , "checkpoint_save": 2000           
+    , "checkpoint_print": 250
   }
 }

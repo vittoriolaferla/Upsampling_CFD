@@ -1,5 +1,5 @@
 {
-  "task": "swinir_sr_x2_Obstacles_no_umass_Outdoor"    
+  "task": "swinir_sr_x2_outdoor_vector_dataset"    
   , "model": "plain" 
   , "gpu_ids": [0]
   , "dist": true
@@ -17,21 +17,21 @@
     "train": {
       "name": "train_dataset"  
      , "dataset_type": "sr"          
-      , "dataroot_H": "/home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/train/high_res"
-      , "dataroot_L": "/home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/train/low_res"
+      , "dataroot_H": "/home/vittorio/Documenti/Upsampling_CFD/datasets/VectorDatasetOutdoor/train/high_res"
+      , "dataroot_L": "/home/vittorio/Documenti/Upsampling_CFD/datasets/VectorDatasetOutdoor/train/low_res"
         
 
-      , "H_size": 64
-      ,"lq_patchsize": 8
+      , "H_size": 256
+      ,"lq_patchsize": 128
       , "dataloader_shuffle": true
-      , "dataloader_num_workers": 16
-      , "dataloader_batch_size": 4
+      , "dataloader_num_workers": 1
+      , "dataloader_batch_size": 2
     }
     , "test": {
       "name": "test_dataset"            
       , "dataset_type": "sr"         
-      , "dataroot_H": "/home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/test/high_res"
-      , "dataroot_L": "/home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Split_Outdoor_Flow/test/low_res"
+      , "dataroot_H": "/home/vittorio/Documenti/Upsampling_CFD/datasets/VectorDatasetOutdoor/test/high_res"
+      , "dataroot_L": "/home/vittorio/Documenti/Upsampling_CFD/datasets/VectorDatasetOutdoor/test/low_res"
     }
   }
 
@@ -39,7 +39,7 @@
     "net_type": "swinir" 
     , "upscale": 2                   
     , "in_chans": 3
-    , "img_size": 32                   
+    , "img_size": 128                   
     , "window_size": 8
     , "img_range": 1.0 
     , "depths": [6, 6, 6, 6, 6, 6] 
@@ -57,15 +57,13 @@
   , "train": {
     "G_lossfn_type": "l1"
     ,"use_umass_loss": false
-    , "use_mask": true
-    , "umass_loss_weight":2
+    , "use_mask": false
+    , "umass_loss_weight":0.2
     ,"use_dissipation_loss": false
     ,"dissipation_loss_weight": 0.25
     , "G_lossfn_weight": 1         
 
     , "E_decay": 0.999
-    ,"diff_vel_dir": "superresolution/swinir_sr_classical_patch24_x4_physic_mass_1_no_pad/diff_velocities"
-    ,"pred_vel_dir": "superresolution/swinir_sr_classical_patch24_x4_physic_mass_1_no_pad/pred_velocities"
     ,"save_heatmaps": false             
 
     , "G_optimizer_type": "adam"        
