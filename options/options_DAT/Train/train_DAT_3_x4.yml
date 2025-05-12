@@ -1,7 +1,8 @@
 # general settings
-name: train_DAT_x2_umass_Vecchiarelli
+name: train_DAT_x2_Scalar_Dataset_Outdoor_X4
+
 model_type: DATModel
-scale: 2
+scale: 4
 num_gpu: auto
 manual_seed: 10
 
@@ -11,20 +12,20 @@ datasets:
     task: SR
     name: DF2K
     type: PairedImageDataset
-    dataroot_gt: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Vector_Sigmoid/train/HR
-    dataroot_lq: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Vector_Sigmoid/train/LR
+    dataroot_gt: /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow_4/train/high_res
+    dataroot_lq: /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow_4/train/low_res
     filename_tmpl: '{}'
     io_backend:
       type: disk
 
     gt_size: 256
-    lq_patch_size: 48
+    lq_patch_size: 64
     use_hflip: True
     use_rot: True
     # data loader
     use_shuffle: True
     num_worker_per_gpu: 1
-    batch_size_per_gpu: 8
+    batch_size_per_gpu: 2
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
 
@@ -32,9 +33,8 @@ datasets:
     task: SR
     name: Set5
     type: PairedImageDataset
-    dataroot_gt: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Vector_Sigmoid/val/HR
-    dataroot_lq: /home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/Vector_Sigmoid/val/LR
-
+    dataroot_gt: /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow_4/test/high_res
+    dataroot_lq: /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow_4/test/low_res
     filename_tmpl: '{}'
     io_backend:
       type: disk
@@ -42,15 +42,15 @@ datasets:
 # network structures
 network_g:
   type: DAT
-  upscale: 2
+  upscale: 4
   in_chans: 3
-  img_size: 48
+  img_size: 64
   img_range: 1.
   split_size: [8,16]
   depth: [6,6,6,6,6,6]
   embed_dim: 180
   num_heads: [6,6,6,6,6,6]
-  expansion_factor: 2
+  expansion_factor: 4
   resi_connection: '1conv'
 
 # path
@@ -83,9 +83,9 @@ train:
 
   # Physics-Based Losses
   use_umass_loss: False
-  use_umass_loss_Vecchiarelli: True
+  use_umass_loss_Vecchiarelli: False
   use_mask: False
-  umass_loss_weight: 6
+  umass_loss_weight: 0.02
   use_momentum_loss: False
   momentum_loss_weight: 1  # Adjust as necessary
   use_dissipation_loss: False
@@ -94,7 +94,7 @@ train:
 
 # validation settings
 val:
-  val_freq: !!float 5e3
+  val_freq: !!float 2e3
   save_img: True
 
   metrics:
@@ -109,8 +109,8 @@ val:
 
 # logging settings
 logger:
-  print_freq: 100
-  save_checkpoint_freq: !!float 5e3
+  print_freq: 500
+  save_checkpoint_freq: !!float 5e2
   use_tb_logger: True
   wandb:
     project: ~
@@ -120,3 +120,4 @@ logger:
 dist_params:
   backend: nccl
   port: 29500
+

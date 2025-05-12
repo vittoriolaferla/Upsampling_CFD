@@ -175,9 +175,32 @@ class RealESRGANDataset(data.Dataset):
             img_gt = cv2.copyMakeBorder(img_gt, 0, pad_h, 0, pad_w, cv2.BORDER_REFLECT_101)
             h, w = img_gt.shape[0:2]
 
-        top = random.randint(0, img_gt.shape[0] - crop_pad_size) if img_gt.shape[0] > crop_pad_size else 0
-        left = random.randint(0, img_gt.shape[1] - crop_pad_size) if img_gt.shape[1] > crop_pad_size else 0
-        img_gt = img_gt[top:top + crop_pad_size, left:left + crop_pad_size, ...]
+
+        # -------------------- Safe Training-Time Crop -------------------- #
+        if self.mode == 'training':
+            top = random.randint(0, max(img_gt.shape[0] - self.gt_size, 0))
+            left = random.randint(0, max(img_gt.shape[1] - self.gt_size, 0))
+            img_gt = img_gt[top:top + crop_pad_size, left:left + crop_pad_size, ...]
+
+
+            # Crop velocity data if available
+            if vel_df is not None and 'csv_coord_cols' in self.opt:
+                csv_coord_cols = self.opt['csv_coord_cols']
+                if isinstance(csv_coord_cols, list) and len(csv_coord_cols) == 2:
+                    try:
+                        x_col, y_col = csv_coord_cols
+                        vel_df_cropped = vel_df[
+                            (vel_df[x_col] >= left) & (vel_df[x_col] < left + self.gt_size) &
+                            (vel_df[y_col] >= top) & (vel_df[y_col] < top + self.gt_size)
+                        ].copy()
+                        vel_df_cropped.loc[:, x_col] -= left
+                        vel_df_cropped.loc[:, y_col] -= top
+                        vel_df = vel_df_cropped
+                    except KeyError:
+                        print(f"Warning: Coordinate columns {csv_coord_cols} not found in {vel_path}")
+                    except Exception as e:
+                        print(f"Error cropping velocity data: {e}")
+
 
         # Crop CSV data if available and in training mode
         if vel_df is not None and 'csv_coord_cols' in self.opt:
@@ -199,23 +222,6 @@ class RealESRGANDataset(data.Dataset):
                     print(f"Warning: Coordinate columns {csv_coord_cols} not found in {vel_path}")
                 except Exception as e:
                     print(f"Error during CSV cropping: {e}")
-
-        if self.rescale_gt and crop_pad_size != self.gt_size:
-            img_gt = cv2.resize(img_gt, dsize=(self.gt_size, self.gt_size), interpolation=cv2.INTER_AREA)
-            # Rescale velocity coordinates if needed - this depends on what the coordinates represent
-            # If they are pixel locations, you would need to scale them.
-            if vel_df is not None and 'csv_coord_cols' in self.opt:
-                csv_coord_cols = self.opt['csv_coord_cols']
-                if isinstance(csv_coord_cols, list) and len(csv_coord_cols) == 2:
-                    try:
-                        x_col = csv_coord_cols[0]
-                        y_col = csv_coord_cols[1]
-                        original_size = crop_pad_size
-                        target_size = self.gt_size
-                        vel_df.loc[:, x_col] = (vel_df[x_col] * (target_size / original_size)).round().astype(int)
-                        vel_df.loc[:, y_col] = (vel_df[y_col] * (target_size / original_size)).round().astype(int)
-                    except KeyError:
-                        pass # Handle if coordinate columns are not present
 
         # ------------------------ Generate Kernels ------------------------ #
         kernel1 = self.generate_kernel(kernel_list=self.kernel_list,

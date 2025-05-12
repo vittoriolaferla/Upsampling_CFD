@@ -2,7 +2,7 @@ trainer:
   target: trainer.TrainerDifIR
 
 model:
-  target: models.unet.UNetModelSwin
+  target: ResShift_models.unet.UNetModelSwin
   ckpt_path: ~
   params:
     image_size: 48

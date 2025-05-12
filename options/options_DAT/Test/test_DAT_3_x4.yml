@@ -1,5 +1,5 @@
 # general settings
-name: test_DAT_x4_Scalar_Obstacles
+name: test_DAT_x4_Scalar_Outdoor
 model_type: DATModel
 scale: 4
 num_gpu: 1
@@ -10,8 +10,8 @@ datasets:
     task: SR
     name: no_physic_mass
     type: PairedImageDataset
-    dataroot_gt: /home/vittorio/Documenti/Upsampling_CFD/datasets/DatasetObstacles_4/test/high_res
-    dataroot_lq: /home/vittorio/Documenti/Upsampling_CFD/datasets/DatasetObstacles_4/test/low_res
+    dataroot_gt: /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow_4/test/high_res
+    dataroot_lq: /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow_4/test/low_res
     filename_tmpl: '{}'
     io_backend:
       type: disk
@@ -22,13 +22,13 @@ network_g:
   type: DAT
   upscale: 4
   in_chans: 3
-  img_size: 16
+  img_size: 128
   img_range: 1.
-  split_size: [2,4]
+  split_size: [8,16]
   depth: [6,6,6,6,6,6]
   embed_dim: 180
   num_heads: [6,6,6,6,6,6]
-  expansion_factor: 4
+  expansion_factor: 2
   resi_connection: '1conv'
 
 
@@ -52,7 +52,7 @@ train:
 
 # path
 path:
-  pretrain_network_g: /home/vittorio/Documenti/Upsampling_CFD/pretrained_models_2nd_dataset/train_DAT_x4_Dataset_Obstacles/models/net_g_latest.pth
+  pretrain_network_g: /home/vittorio/Documenti/Upsampling_CFD/pretrained_models_3rd_Dataset/DAT/train_DAT_x2_Scalar_Dataset_Outdoor_X4/models/net_g_latest.pth
   strict_load_g: True
 
 # validation settings

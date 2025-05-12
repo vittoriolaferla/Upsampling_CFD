@@ -685,7 +685,7 @@ class TrainerDifIR(TrainerBase):
             gt_size = self.configs.degradation['gt_size']
             # Need to adjust the scale factor passed to crop if resize_back is False
             crop_sf = 1 if self.configs.degradation.resize_back else sf
-            im_gt, im_lq, vel_out = self.paired_random_crop_with_vel(img_gts=im_gt,img_lqs= im_lq, vel_gts= None, gt_patch_size=gt_size,sf= crop_sf) # Use crop_sf
+            im_gt, im_lq, vel_out = self.paired_random_crop_with_vel(img_gts=im_gt,img_lqs= im_lq, vel_gts= None, gt_patch_size=64,sf= crop_sf) # Use crop_sf
 
             im_lq = (im_lq - 0.5) / 0.5
             im_gt = (im_gt - 0.5) / 0.5
@@ -1032,7 +1032,7 @@ class TrainerDifIR(TrainerBase):
                             im_sr_all = torch.cat((im_sr_all, im_sr_progress), dim=1)
                     num_iters += 1
                     tt -= 1
-                print(im_gt.shape)
+                print(f"Image ground truth before caluclating PSNR: "+ str(im_gt.shape))
                 if 'gt' in data:
                     mean_psnr += util_image.batch_PSNR(
                             sample_decode['sample'] * 0.5 + 0.5,

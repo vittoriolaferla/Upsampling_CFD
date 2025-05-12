@@ -1,69 +1,30 @@
 # general settings
-name: test_DAT_2_x3
+name: test_DAT_x2_outdoor_umass_Colab
 model_type: DATModel
-scale: 3
+scale: 2
 num_gpu: 1
 manual_seed: 10
 
 datasets:
   test_1:  # the 1st test dataset
     task: SR
-    name: Set5
+    name: test_set_physic
     type: PairedImageDataset
-    dataroot_gt: datasets/benchmark/Set5/HR
-    dataroot_lq: datasets/benchmark/Set5/LR_bicubic/X3
-    filename_tmpl: '{}x3'
+    dataroot_gt: /content/drive/MyDrive/UpsamplingPaperDatasets/SplitOutdoorFlowComponentW/test/high_res
+    dataroot_lq: /content/drive/MyDrive/UpsamplingPaperDatasets/SplitOutdoorFlowComponentW/test/low_res
+    filename_tmpl: '{}'
     io_backend:
       type: disk
 
-  test_2:  # the 2st test dataset
-    task: SR
-    name: Set14
-    type: PairedImageDataset
-    dataroot_gt: datasets/benchmark/Set14/HR
-    dataroot_lq: datasets/benchmark/Set14/LR_bicubic/X3
-    filename_tmpl: '{}x3'
-    io_backend:
-      type: disk
-
-  test_3:  # the 3st test dataset
-    task: SR
-    name: B100
-    type: PairedImageDataset
-    dataroot_gt: datasets/benchmark/B100/HR
-    dataroot_lq: datasets/benchmark/B100/LR_bicubic/X3
-    filename_tmpl: '{}x3'
-    io_backend:
-      type: disk
-
-  test_4:  # the 4st test dataset
-    task: SR
-    name: Urban100
-    type: PairedImageDataset
-    dataroot_gt: datasets/benchmark/Urban100/HR
-    dataroot_lq: datasets/benchmark/Urban100/LR_bicubic/X3
-    filename_tmpl: '{}x3'
-    io_backend:
-      type: disk
-
-  test_5:  # the 5st test dataset
-    task: SR
-    name: Manga109
-    type: PairedImageDataset
-    dataroot_gt: datasets/benchmark/Manga109/HR
-    dataroot_lq: datasets/benchmark/Manga109/LR_bicubic/X3
-    filename_tmpl: '{}_LRBI_x3'
-    io_backend:
-      type: disk
 
 # network structures
 network_g:
   type: DAT
-  upscale: 3
+  upscale: 2
   in_chans: 3
-  img_size: 64
+  img_size: 128
   img_range: 1.
-  split_size: [8,32]
+  split_size: [16,64]
   depth: [6,6,6,6,6,6]
   embed_dim: 180
   num_heads: [6,6,6,6,6,6]
@@ -72,21 +33,56 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: experiments/pretrained_models/DAT-2/DAT_2_x3.pth
+  pretrain_network_g: /content/drive/MyDrive/UpsamplingPaperDatasets/net_g_3500.pth
   strict_load_g: True
+
+
+train:
+  optim_g:
+    type: Adam
+    lr: !!float 2e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: MultiStepLR
+    milestones: [250000, 400000, 450000, 475000]
+    gamma: 0.5
+
+  total_iter: 10000
+  warmup_iter: -1  # no warm up
+
+  # losses
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1
+    reduction: mean
+  
+  
+  # Physics-Based Losses
+  use_umass_loss: False
+  umass_loss_weight: 0.00001
+  use_momentum_loss: False
+  momentum_loss_weight: 1  # Adjust as necessary
+  use_dissipation_loss: False
+  dissipation_loss_weight: 5 
+  rgb_to_vel: False # Adjust as necessary
+
+
+
 
 # validation settings
 val:
   save_img: True
-  suffix: ~  # add suffix to saved images, if None, use exp name
+  suffix: "suffix"  # add suffix to saved images, if None, use exp name
   use_chop: False  # True to save memory, if img too large
 
   metrics:
     psnr: # metric name, can be arbitrary
       type: calculate_psnr
-      crop_border: 3
+      crop_border: 2
       test_y_channel: True
     ssim:
       type: calculate_ssim
-      crop_border: 3
+      crop_border: 2
       test_y_channel: True

@@ -9,7 +9,7 @@ model:
     in_channels: 3
     model_channels: 160
     out_channels: 3
-    attention_resolutions: [32,16,8,4]
+    attention_resolutions: [128,64,32,16]
     dropout: 0.1
     channel_mult: [1,2,4]  #Next to try is [1,2,4,8]
     num_res_blocks: [2,2,2]
@@ -99,7 +99,7 @@ data:
   train:
     type: realesrgan
     params:
-      dir_paths:    /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/train/high_res
+      dir_paths:  /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/train/high_res
       im_exts: ['jpg', 'png']
       io_backend:
         type: disk
@@ -119,23 +119,23 @@ data:
       betag_range2: [0.5, 4.0]
       betap_range2: [1, 2.0]
       final_sinc_prob: 0.8
-      gt_size: 64
-      crop_pad_size: 64
+      gt_size: 256
+      crop_pad_size: 128
       use_hflip: True
       use_rot: False
-      rescale_gt: True
+      rescale_gt: False
 
 
   val:
     type: base
     params:
-      dir_path:  /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/test/high_res
+      dir_path:  /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/test/low_res
       im_exts: ['jpg', 'png']
       transform_type: default
       transform_kwargs:
           mean: 0.5
           std: 0.5
-      extra_dir_path: /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/test/low_res
+      extra_dir_path: /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/test/high_res
       extra_transform_type: default
       extra_transform_kwargs:
           mean: 0.5
@@ -160,8 +160,8 @@ train:
   #Mse weight
   mse_loss_weight: 1
   # dataloader
-  batch: [16, 8]                
-  microbatch: 8
+  batch: [8, 4]                
+  microbatch: 4
   num_workers: 4
   prefetch_factor: 2            
   # optimization settings
@@ -169,13 +169,13 @@ train:
   ema_rate: 0.999
   iterations: 25000          # total iterations
   # save logging
-  save_freq: 4000      
+  save_freq: 2500      
   log_freq: [500, 2000, 1]         # [training loss, training images, val images]
   local_logging: True           # manually save images
   tf_logging: False             # tensorboard logging
   # validation settings
   use_ema_val: True            
-  val_freq: 1000000000000
+  val_freq: 5000
   val_y_channel: True
   val_resolution: ${model.params.lq_size}
   val_padding_mode: reflect

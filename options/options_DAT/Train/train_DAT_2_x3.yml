@@ -1,3 +1,7 @@
+# GENERATE TIME: Mon May  5 11:47:45 2025
+# CMD:
+# basicsr/train.py --local_rank=0 -opt options/options_DAT/Train/train_DAT_2_x3.yml --launcher pytorch
+
 # general settings
 name: train_DAT_x2__umass_outdoor_flow_COLAB
 model_type: DATModel
@@ -11,14 +15,14 @@ datasets:
     task: SR
     name: DF2K
     type: PairedImageDataset
-    dataroot_gt: /content/drive/MyDrive/UpsamplingPaperDatasets/SPlitOutdoorFlowComponentW/train/high_res
-    dataroot_lq: /content/drive/MyDrive/UpsamplingPaperDatasets/SPlitOutdoorFlowComponentW/train/low_res
+    dataroot_gt: /content/drive/MyDrive/UpsamplingPaperDatasets/SplitOutdoorFlowComponentW/train/high_res
+    dataroot_lq: /content/drive/MyDrive/UpsamplingPaperDatasets/SplitOutdoorFlowComponentW/train/low_res
     filename_tmpl: '{}'
     io_backend:
       type: disk
 
     gt_size: 256
-    lq_patch_size: 128
+    lq_patch_size: 64
     use_hflip: True
     use_rot: True
     # data loader
@@ -32,8 +36,8 @@ datasets:
     task: SR
     name: Set5
     type: PairedImageDataset
-    dataroot_gt: /content/drive/MyDrive/UpsamplingPaperDatasets/SPlitOutdoorFlowComponentW/test/high_res
-    dataroot_lq: /content/drive/MyDrive/UpsamplingPaperDatasets/SPlitOutdoorFlowComponentW/test/low_res
+    dataroot_gt: /content/drive/MyDrive/UpsamplingPaperDatasets/SplitOutdoorFlowComponentW/test/high_res
+    dataroot_lq: /content/drive/MyDrive/UpsamplingPaperDatasets/SplitOutdoorFlowComponentW/test/low_res
     filename_tmpl: '{}'
     io_backend:
       type: disk
@@ -45,7 +49,7 @@ network_g:
   in_chans: 3
   img_size: 128
   img_range: 1.
-  split_size: [8,16]
+  split_size: [16,64]
   depth: [6,6,6,6,6,6]
   embed_dim: 180
   num_heads: [6,6,6,6,6,6]
@@ -84,7 +88,7 @@ train:
   use_umass_loss: False
   use_umass_loss_Vecchiarelli: True
   use_mask: False
-  umass_loss_weight: 6
+  umass_loss_weight: 0.03
   use_momentum_loss: False
   momentum_loss_weight: 1  # Adjust as necessary
   use_dissipation_loss: False
@@ -93,7 +97,7 @@ train:
 
 # validation settings
 val:
-  val_freq: !!float 2e3
+  val_freq: !!float 5e2
   save_img: True
 
   metrics:

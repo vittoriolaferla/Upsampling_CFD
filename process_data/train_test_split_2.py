@@ -7,10 +7,10 @@ import random
 
 # === User-defined variables ===
 # Paths to separate folders for high- and low-resolution images
-HIGH_RES_DIR = "/home/vittorio/Scrivania/ETH/Upsampling/UpsamplingCFD/datasets/Dataset_Outdoor_Flow/original"
-LOW_RES_DIR = "/home/vittorio/Scrivania/ETH/Upsampling/UpsamplingCFD/datasets/Dataset_Outdoor_Flow/2_Downsample"
+HIGH_RES_DIR = "/home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/dataset_obstacles/2d_slices/No_Downsample/Y"
+LOW_RES_DIR = "/home/vittorio/Scrivania/ETH/Upsampling/Upsampling_CFD/datasets/dataset_obstacles/2d_slices/4_Downsample/Y"
 # Path to output split folder
-OUTPUT_SPLIT_DIR = "/home/vittorio/Scrivania/ETH/Upsampling/UpsamplingCFD/datasets/Split_Outdoor_Flow"
+OUTPUT_SPLIT_DIR = "/home/vittorio/Documenti/Upsampling_CFD/datasets/DatasetObstacles_4"
 # Train/test split ratio (e.g., 0.8 means 80% train, 20% test)
 TRAIN_RATIO = 0.8
 # Supported image extensions

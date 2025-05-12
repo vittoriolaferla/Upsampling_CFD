@@ -8,9 +8,9 @@ import numpy as np
 
 # === User-defined paths ===
 # Path to an image file or a directory of images
-INPUT_PATH = "/home/vittorio/Scrivania/ETH/Upsampling/UpsamplingCFD/datasets/GoundTruthUnifom"
+INPUT_PATH = "/home/vittorio/Documenti/Upsampling_CFD/datasets/Vector_representation/Vector"
 # Directory where subfolders (original, ds2x, ds4x) will be created
-OUTPUT_DIR = "/home/vittorio/Scrivania/ETH/Upsampling/UpsamplingCFD/datasets/Dataset_Outdoor_Flow"
+OUTPUT_DIR = "/home/vittorio/Documenti/Upsampling_CFD/datasets/Vector_representation/Vector"
 # Reduction factors and corresponding subfolder names
 FACTORS = {2: "2_Downsample", 4: "4_Downsample"}
 # Subfolder for original copies

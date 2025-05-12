@@ -1,8 +1,8 @@
 # general settings
-name: train_DAT_x4_Dataset_Obstacles
+name: train_DAT_x2_Vector_Dataset_Outdoor
 
 model_type: DATModel
-scale: 4
+scale: 2
 num_gpu: auto
 manual_seed: 10
 
@@ -12,14 +12,14 @@ datasets:
     task: SR
     name: DF2K
     type: PairedImageDataset
-    dataroot_gt: /home/vittorio/Documenti/Upsampling_CFD/datasets/DatasetObstacles_4/train/high_res
-    dataroot_lq: /home/vittorio/Documenti/Upsampling_CFD/datasets/DatasetObstacles_4/train/low_res
+    dataroot_gt: /home/vittorio/Documenti/Upsampling_CFD/datasets/VectorDatasetOutdoor/train/high_res
+    dataroot_lq: /home/vittorio/Documenti/Upsampling_CFD/datasets/VectorDatasetOutdoor/train/low_res
     filename_tmpl: '{}'
     io_backend:
       type: disk
 
-    gt_size: 64
-    lq_patch_size: 16
+    gt_size: 256
+    lq_patch_size: 64
     use_hflip: True
     use_rot: True
     # data loader
@@ -33,8 +33,8 @@ datasets:
     task: SR
     name: Set5
     type: PairedImageDataset
-    dataroot_gt: /home/vittorio/Documenti/Upsampling_CFD/datasets/DatasetObstacles_4/test/high_res
-    dataroot_lq: /home/vittorio/Documenti/Upsampling_CFD/datasets/DatasetObstacles_4/test/low_res
+    dataroot_gt: /home/vittorio/Documenti/Upsampling_CFD/datasets/VectorDatasetOutdoor/test/high_res
+    dataroot_lq: /home/vittorio/Documenti/Upsampling_CFD/datasets/VectorDatasetOutdoor/test/low_res
     filename_tmpl: '{}'
     io_backend:
       type: disk
@@ -42,15 +42,15 @@ datasets:
 # network structures
 network_g:
   type: DAT
-  upscale: 4
+  upscale: 2
   in_chans: 3
-  img_size: 16
+  img_size: 128
   img_range: 1.
-  split_size: [2,4]
+  split_size: [8,16]
   depth: [6,6,6,6,6,6]
   embed_dim: 180
   num_heads: [6,6,6,6,6,6]
-  expansion_factor: 4
+  expansion_factor: 2
   resi_connection: '1conv'
 
 # path
@@ -94,7 +94,7 @@ train:
 
 # validation settings
 val:
-  val_freq: !!float 5e3
+  val_freq: !!float 2e3
   save_img: True
 
   metrics:
@@ -105,7 +105,8 @@ val:
     ssim:
       type: calculate_ssim
       crop_border: 2
-      test_y_channel: Trueì
+      test_y_channel: True
+
 # logging settings
 logger:
   print_freq: 500
