@@ -34,10 +34,10 @@ diffusion models clearly outperform canonical CNN models such as U-Net..
 | ![](./images/ResultsFirstDataset.jpg) | ![](./images/ResultsSecondDataset.jpg) |
 
 
-### VISION TRANSFORMERS
+## Test and Train: Vision Transformer
 
-## Requirements
-To run the Vision TRANSFORMERS you need to create a conda enviroment with python 3.8. Therefore run the following commands:
+### Requirements
+To run the Vision Transformers you need to create a conda enviroment with python 3.8. Therefore run the following commands:
 ```
 conda create -n Upsampling python=3.8
 conda activate Upsampling
@@ -76,9 +76,8 @@ python -m torch.distributed.launch --nproc_per_node=1 --master_port=4321 basicsr
 python -m torch.distributed.launch --nproc_per_node=1 --master_port=4321 basicsr/test.py -opt options/options_DAT/Test/test_DAT_2_x2.yml --launcher pytorch
 ```
 
-### DIFFUSION MODEL
-
-## Requirements
+## Test and Train: Diffusion Model
+### Requirements
 The ResShift model requires a different configuration, for this reason you need to create another conda enviroment with a higher version of python.
 ```
 conda create -n ResShift python=3.12
