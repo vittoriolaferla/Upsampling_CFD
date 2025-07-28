@@ -5,11 +5,11 @@ model:
   target: ResShift_models.unet.UNetModelSwin
   ckpt_path: ~
   params:
-    image_size: 256
+    image_size: 48
     in_channels: 3
     model_channels: 160
     out_channels: 3
-    attention_resolutions: [32,16,8,4]
+    attention_resolutions: [48,24,12,6]
     dropout: 0.1
     channel_mult: [1,2,4]  #Next to try is [1,2,4,8]
     num_res_blocks: [2,2,2]
@@ -21,13 +21,13 @@ model:
     resblock_updown: False 
     swin_depth: 2
     swin_embed_dim: 192
-    window_size: 4
+    window_size: 6
     mlp_ratio: 4
     cond_lq: True
-    lq_size: 128
+    lq_size: 24
 
 diffusion:
-  target: ResShift_models.script_util.create_gaussian_diffusion
+  target: models.script_util.create_gaussian_diffusion
   params:
     sf: 2
     schedule_name: exponential
@@ -90,17 +90,16 @@ degradation:
   gray_noise_prob2: 0.4
   jpeg_range2: [30, 95]
 
-  gt_size: 64
+  gt_size: 48 
   resize_back: False
   use_sharp: False
-
 
 data:
   train:
     type: realesrgan
     params:
-      dir_paths:    /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/train/high_res
-      im_exts: ['jpg', 'png']
+      dir_paths: /home/vittorio/Scrivania/ResShift_4_scale/data/Vector_Sigmoid/train/HR
+      im_exts: png
       io_backend:
         type: disk
       blur_kernel_size: 21
@@ -119,8 +118,8 @@ data:
       betag_range2: [0.5, 4.0]
       betap_range2: [1, 2.0]
       final_sinc_prob: 0.8
-      gt_size: 64
-      crop_pad_size: 64
+      gt_size: 48
+      crop_pad_size: 300
       use_hflip: True
       use_rot: False
       rescale_gt: True
@@ -129,13 +128,13 @@ data:
   val:
     type: base
     params:
-      dir_path:  /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/test/high_res
-      im_exts: ['jpg', 'png']
+      dir_path:  /home/vittorio/Scrivania/ResShift_4_scale/data/Vector_Sigmoid/val/LR_4
+      im_exts: png
       transform_type: default
       transform_kwargs:
           mean: 0.5
           std: 0.5
-      extra_dir_path: /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/test/low_res
+      extra_dir_path: /home/vittorio/Scrivania/ResShift_4_scale/data/Vector_Sigmoid/val/HR
       extra_transform_type: default
       extra_transform_kwargs:
           mean: 0.5
@@ -150,7 +149,7 @@ train:
   warmup_iterations: 5000
   #Umass
   use_umass_loss: False
-  umass_loss_weight:  0.000005
+  umass_loss_weight: 4
   #Dissipation
   use_dissipation_loss: False
   dissipation_loss_weight: 1
@@ -167,15 +166,15 @@ train:
   # optimization settings
   weight_decay: 0              
   ema_rate: 0.999
-  iterations: 25000          # total iterations
+  iterations: 50000          # total iterations
   # save logging
-  save_freq: 4000      
+  save_freq: 5000      
   log_freq: [500, 2000, 1]         # [training loss, training images, val images]
   local_logging: True           # manually save images
   tf_logging: False             # tensorboard logging
   # validation settings
   use_ema_val: True            
-  val_freq: 1000000000000
+  val_freq: ${train.save_freq}
   val_y_channel: True
   val_resolution: ${model.params.lq_size}
   val_padding_mode: reflect

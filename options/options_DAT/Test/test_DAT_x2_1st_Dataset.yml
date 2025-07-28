@@ -1,5 +1,5 @@
 # general settings
-name: test_DAT_x2_Outdoor_Vector
+name: test_DAT_x2_Outdoor_single_image
 model_type: DATModel
 scale: 2
 num_gpu: 1
@@ -10,8 +10,8 @@ datasets:
     task: SR
     name: test_set_physic
     type: PairedImageDataset
-    dataroot_gt: /home/vittorio/Documenti/Upsampling_CFD/datasets/VectorDatasetOutdoor/test/high_res
-    dataroot_lq:  /home/vittorio/Documenti/Upsampling_CFD/datasets/VectorDatasetOutdoor/test/low_res
+    dataroot_gt: /home/vittorio/Documenti/Upsampling_CFD/datasets/single_image_dataset/high_res
+    dataroot_lq:  /home/vittorio/Documenti/Upsampling_CFD/datasets/single_image_dataset/low_res
     filename_tmpl: '{}'
     io_backend:
       type: disk
@@ -22,9 +22,9 @@ network_g:
   type: DAT
   upscale: 2
   in_chans: 3
-  img_size: 128
+  img_size: 24
   img_range: 1.
-  split_size: [8,16]
+  split_size: [2,8]
   depth: [6,6,6,6,6,6]
   embed_dim: 180
   num_heads: [6,6,6,6,6,6]
@@ -33,8 +33,7 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: /home/vittorio/Documenti/Upsampling_CFD/pretrained_models_3rd_Dataset/DAT/train_DAT_x2_Vector_Dataset_Outdoor/models/net_g_24000.pth
-  strict_load_g: True
+  pretrain_network_g:/home/vittorio/Documenti/Upsampling_CFD/pretrained_models_Dataset_1/DAT/train_DAT_x2_no_pjysics_Scalar/models/net_g_40000.pth
 
 
 train:

@@ -3,7 +3,7 @@ trainer:
 
 model:
   target: ResShift_models.unet.UNetModelSwin
-  ckpt_path: ~
+  ckpt_path: 
   params:
     image_size: 256
     in_channels: 3
@@ -99,7 +99,7 @@ data:
   train:
     type: realesrgan
     params:
-      dir_paths:  /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/train/high_res
+      dir_paths:  /home/vittorio/Documenti/Upsampling_CFD/datasets/VectorDatasetOutdoor/train/high_res
       im_exts: ['jpg', 'png']
       io_backend:
         type: disk
@@ -129,13 +129,13 @@ data:
   val:
     type: base
     params:
-      dir_path:  /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/test/low_res
+      dir_path:  /home/vittorio/Documenti/Upsampling_CFD/datasets/VectorDatasetOutdoor/test/low_res
       im_exts: ['jpg', 'png']
       transform_type: default
       transform_kwargs:
           mean: 0.5
           std: 0.5
-      extra_dir_path: /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow/test/high_res
+      extra_dir_path: /home/vittorio/Documenti/Upsampling_CFD/datasets/VectorDatasetOutdoor/test/high_res
       extra_transform_type: default
       extra_transform_kwargs:
           mean: 0.5

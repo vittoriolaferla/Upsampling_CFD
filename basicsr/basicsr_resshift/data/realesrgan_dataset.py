@@ -111,6 +111,7 @@ class RealESRGANDataset(data.Dataset):
 
         # --------------------------- Patch Size Settings ------------------------- #
         self.gt_size = opt.get('gt_size', 256)  # Default ground truth size
+        print(f"GT size: {self.gt_size}")
         self.crop_pad_size = opt.get('crop_pad_size', 400)  # Default crop/pad size
 
         # ----------------------------- Additional Attributes ----------------------- #

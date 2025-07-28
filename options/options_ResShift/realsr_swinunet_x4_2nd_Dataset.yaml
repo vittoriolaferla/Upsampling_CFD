@@ -1,5 +1,48 @@
 trainer:
-  target: trainer.TrainerDifIRLPIPS
+  target: trainer.TrainerDifIR
+
+model:
+  target: ResShift_models.unet.UNetModelSwin
+  ckpt_path: /home/vittorio/Documenti/Upsampling_CFD/output_dir/2025-05-12-13-59/ckpts/model_7500.pth
+  params:
+    image_size: 256
+    in_channels: 3
+    model_channels: 160
+    out_channels: 3
+    attention_resolutions: [128,64,32,16]
+    dropout: 0.1
+    channel_mult: [1,2,4]  #Next to try is [1,2,4,8]
+    num_res_blocks: [2,2,2]
+    conv_resample: True
+    dims: 2
+    use_fp16: False
+    num_head_channels: 32
+    use_scale_shift_norm: True
+    resblock_updown: False 
+    swin_depth: 2
+    swin_embed_dim: 192
+    window_size: 4
+    mlp_ratio: 4
+    cond_lq: True
+    lq_size: 64
+
+diffusion:
+  target: ResShift_models.script_util.create_gaussian_diffusion
+  params:
+    sf: 4
+    schedule_name: exponential
+    schedule_kwargs:
+      power: 0.3
+    etas_end: 0.99
+    steps: 15
+    min_noise_level: 0.04
+    kappa: 2.0
+    weighted_mse: False
+    predict_type: xstart
+    timestep_respacing: ~
+    scale_factor: 1.0
+    normalize_input: True
+    latent_flag: False
 
 autoencoder:
   target: ldm.models.autoencoder.VQModelTorch
@@ -11,7 +54,7 @@ autoencoder:
     ddconfig:
       double_z: False
       z_channels: 3
-      resolution: 256
+      resolution: 48
       in_channels: 3
       out_ch: 3
       ch: 128
@@ -24,51 +67,9 @@ autoencoder:
       dropout: 0.0
       padding_mode: zeros
 
-model:
-  target: models.unet.UNetModelSwin
-  ckpt_path: ~
-  params:
-    image_size: 64
-    in_channels: 3
-    model_channels: 160
-    out_channels: ${autoencoder.params.embed_dim}
-    attention_resolutions: [64,32,16,8]
-    dropout: 0
-    channel_mult: [1, 2, 2, 4]
-    num_res_blocks: [2, 2, 2, 2]
-    conv_resample: True
-    dims: 2
-    use_fp16: False
-    num_head_channels: 32
-    use_scale_shift_norm: True
-    resblock_updown: False
-    swin_depth: 2
-    swin_embed_dim: 192
-    window_size: 8
-    mlp_ratio: 4
-    cond_lq: True
-    lq_size: 128
-
-diffusion:
-  target: models.script_util.create_gaussian_diffusion
-  params:
-    sf: 2
-    schedule_name: exponential
-    schedule_kwargs:
-      power: 0.3
-    etas_end: 0.99
-    steps: 4
-    min_noise_level: 0.2
-    kappa: 2.0
-    weighted_mse: False
-    predict_type: xstart
-    timestep_respacing: ~
-    scale_factor: 1.0
-    normalize_input: True
-    latent_flag: True
 
 degradation:
-  sf: 2
+  sf: 4
   # the first degradation process
   resize_prob: [0.2, 0.7, 0.1]  # up, down, keep
   resize_range: [0.15, 1.5]
@@ -89,20 +90,17 @@ degradation:
   gray_noise_prob2: 0.4
   jpeg_range2: [30, 95]
 
-  gt_size: 256 
+  gt_size: 256
   resize_back: False
   use_sharp: False
+
 
 data:
   train:
     type: realesrgan
     params:
-      dir_paths: []
-      txt_file_path: [
-                      '/mnt/sfs-common/zsyue/database/ImageNet/files_txt/path_train_all.txt', 
-                      '/mnt/sfs-common/zsyue/database/FFHQ/files_txt/files256.txt',
-                     ] 
-      im_exts: ['JPEG', ]
+      dir_paths:  /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow_4/train/high_res
+      im_exts: ['jpg', 'png']
       io_backend:
         type: disk
       blur_kernel_size: 21
@@ -120,39 +118,64 @@ data:
       blur_sigma2: [0.2, 1.5]
       betag_range2: [0.5, 4.0]
       betap_range2: [1, 2.0]
-
       final_sinc_prob: 0.8
-
       gt_size: 256
-      crop_pad_size: 300
+      crop_pad_size: 64
       use_hflip: True
       use_rot: False
-      rescale_gt: True
+      rescale_gt: False
+
+
+  val:
+    type: base
+    params:
+      dir_path:  /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow_4/test/low_res
+      im_exts: ['jpg', 'png']
+      transform_type: default
+      transform_kwargs:
+          mean: 0.5
+          std: 0.5
+      extra_dir_path: /home/vittorio/Documenti/Upsampling_CFD/datasets/SplitDatasetOutdoorFlow_4/test/high_res
+      extra_transform_type: default
+      extra_transform_kwargs:
+          mean: 0.5
+          std: 0.5
+      recursive: False
 
 train:
   # learning rate
   lr: 5e-5                      # learning rate 
   lr_min: 2e-5                      # learning rate 
-  lr_schedule: cosin
+  lr_schedule: ~
   warmup_iterations: 5000
+  #Umass
+  use_umass_loss: False
+  umass_loss_weight:  0.000005
+  #Dissipation
+  use_dissipation_loss: False
+  dissipation_loss_weight: 1
+  #Vorticity
+  use_vorticity_loss: False
+  vorticity_loss_weight: 0.2
+  #Mse weight
+  mse_loss_weight: 1
   # dataloader
-  batch: [96, 8]                
-  microbatch: 12
-  num_workers: 6
+  batch: [8, 4]                
+  microbatch: 4
+  num_workers: 4
   prefetch_factor: 2            
   # optimization settings
-  weight_decay: 0               
+  weight_decay: 0              
   ema_rate: 0.999
-  iterations: 400000            # total iterations
+  iterations: 17500          # total iterations
   # save logging
-  save_freq: 10000
-  log_freq: [200, 2000, 1]         # [training loss, training images, val images]
-  loss_coef: [1.0, 1.0]         # [mse, lpips]
+  save_freq: 2500      
+  log_freq: [500, 2000, 1]         # [training loss, training images, val images]
   local_logging: True           # manually save images
   tf_logging: False             # tensorboard logging
   # validation settings
   use_ema_val: True            
-  val_freq: ${train.save_freq}
+  val_freq: 10000
   val_y_channel: True
   val_resolution: ${model.params.lq_size}
   val_padding_mode: reflect
