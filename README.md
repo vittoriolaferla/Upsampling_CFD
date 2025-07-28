@@ -29,8 +29,8 @@ diffusion models clearly outperform canonical CNN models such as U-Net..
 
 ### Visualization Results: Indoor and Outdoor airflow
 
-|Indoor Airflow| Outdoor Airflow |
-|----------------|----------------|
+| Indoor Airflow | Outdoor Airflow |
+|----------------|-----------------|
 | ![](./images/ResultsFirstDataset.jpg) | ![](./images/ResultsSecondDataset.jpg) |
 
 
