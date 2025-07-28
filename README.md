@@ -1,3 +1,39 @@
+# Physics-Informed Deep Learning for Super-Resolution of Indoor and Outdoor Airflow: 
+
+
+---
+> Numerical modeling of turbulent airflow with Computational Fluid Dynam-
+ics (CFD) requires expertise and a substantial amount of computation power.
+Yet, CFD simulations are considered vital for assessing novel architectural
+and urban ventilation concepts. As a potential remedy, image upsampling
+techniques from computer vision can help in significantly reducing necessary
+computing times while maintaining high prediction accuracy. Hereby, low
+resolution CFD simulations are provided as inputs to prediction models for
+upsampling towards high-fidelity flow fields. Several recent studies focus-
+ing on the built environment propose various upsampling approaches using
+Deep Learning (DL). However, they are either constrained to well specified
+domains, or they use one of the many existing DL architectures without con-
+clusive findings on how model prediction accuracy relates to airflow domain
+characteristics. This paper therefore complements the existing literature by
+comparing several state-of-the-art DL architectures applied to a range of air-
+flow setups, including forced indoor ventilation, as well as urban air flow.
+Results reveal that sparsity of the flow domain exhibits a limiting factor
+for upsampling techniques, even if complemented with physics informed loss
+terms to maintain physical coherence. On the other hand, pronounced and
+heterogeneous flow fields can be upsampled well even to a magnification fac-
+tor of 4, and modern DL architectures based on vision transformers and
+diffusion models clearly outperform canonical CNN models such as U-Net.. 
+><img src="./images/upsampling-concept.png" align="middle" width="800" >
+
+---
+
+### Visualization Results: Indoor and Outdoor airflow
+
+|Indoor Airflow| Outdoor Airflow |
+|----------------|----------------|
+| ![](./images/ResultsFirstDataset.png) | ![](./images/ResultsSecondDataset.png) |
+
+
 ### VISION TRANSFORMERS
 
 ## Requirements

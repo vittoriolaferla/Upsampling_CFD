@@ -48,3 +48,7 @@ pretrained_models_2nd_dataset
 pretrained_models_3rd_Dataset
 pretrained_models_Dataset_1
 velocity_components_normalized
+infereceResut_physics
+ResShift_main_scripts/datapipe/__pycache__
+process_data
+data_creation_and_metrics_visualization
